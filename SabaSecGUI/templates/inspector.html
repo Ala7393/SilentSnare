@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ──────────── PACKET INSPECTOR ──────────── -->
+
+<!-- Header Card -->
+<div class="card" style="margin-bottom:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <i class="fa-solid fa-magnifying-glass-chart" style="color:var(--gold-primary); font-size:1.4rem;"></i>
+            <div>
+                <h2 style="margin:0; color:var(--gold-primary);">Payload Inspector</h2>
+                <p style="margin:3px 0 0; color:var(--text-muted); font-size:0.8rem;">
+                    Real-time analysis of captured HTTP/HTTPS packets
+                </p>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-info" onclick="updatePackets()"
+                    data-tooltip="Manually refresh the packet list now (auto-refreshes every 2 seconds)">
+                <i class="fa-solid fa-rotate fa-xs"></i> Refresh
+            </button>
+            <button class="btn btn-warning" onclick="exportPackets()"
+                    data-tooltip="Download all captured packets as a CSV file for offline analysis">
+                <i class="fa-solid fa-file-arrow-down fa-xs"></i> Export CSV
+            </button>
+            <button class="btn btn-danger" onclick="clearAllPackets()"
+                    data-tooltip="Delete all captured packets from memory — this cannot be undone">
+                <i class="fa-solid fa-trash fa-xs"></i> Clear All
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-container" style="margin-bottom:14px;">
+    <div class="stat-card" data-tooltip="Total number of packets captured since sniffing started">
+        <div class="stat-value" id="totalPackets">0</div>
+        <div class="stat-label"><i class="fa-solid fa-box-archive fa-xs"></i> Total</div>
+    </div>
+    <div class="stat-card" data-tooltip="Packets using HTTPS (port 443) — encrypted, payload not readable">
+        <div class="stat-value" id="securePackets" style="color:#44BB44;">0</div>
+        <div class="stat-label"><i class="fa-solid fa-lock fa-xs"></i> HTTPS</div>
+    </div>
+    <div class="stat-card" data-tooltip="Packets using HTTP (port 80) — unencrypted, payload is readable">
+        <div class="stat-value" id="insecurePackets" style="color:#FF4444;">0</div>
+        <div class="stat-label"><i class="fa-solid fa-lock-open fa-xs"></i> HTTP</div>
+    </div>
+    <div class="stat-card" data-tooltip="Number of distinct protocols seen in captured traffic">
+        <div class="stat-value" id="protocolCount" style="color:#44AAFF;">0</div>
+        <div class="stat-label"><i class="fa-solid fa-layer-group fa-xs"></i> Protocols</div>
+    </div>
+</div>
+
+<!-- Protocol Legend -->
+<div class="card" style="padding:12px 18px; margin-bottom:14px;">
+    <div class="proto-legend">
+        <span style="color:var(--text-muted); font-size:12px; font-weight:600; margin-right:4px;">Legend:</span>
+        <span class="proto-badge" style="background:rgba(255,68,68,0.1); color:#FF6666; border:1px solid rgba(255,68,68,0.3);">
+            <span class="proto-dot" style="background:#FF4444;"></span> HTTP — unencrypted
+        </span>
+        <span class="proto-badge" style="background:rgba(68,187,68,0.1); color:#66EE66; border:1px solid rgba(68,187,68,0.3);">
+            <span class="proto-dot" style="background:#44BB44;"></span> HTTPS — encrypted
+        </span>
+        <span class="proto-badge" style="background:rgba(170,68,255,0.1); color:#CC88FF; border:1px solid rgba(170,68,255,0.3);">
+            <span class="proto-dot" style="background:#AA44FF;"></span> MITM intercepted
+        </span>
+        <span style="color:var(--text-muted); font-size:11px; margin-left:auto;">
+            <i class="fa-solid fa-circle-info fa-xs"></i> Click any row to inspect payload
+        </span>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="padding:14px 18px; margin-bottom:14px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:150px;">
+            <i class="fa-solid fa-filter fa-xs" style="color:var(--gold-dark);"></i>
+            <input id="filterIP" class="filter-input" placeholder="Filter by IP address"
+                   data-tooltip="Filter packets by source or destination IP address — supports partial match"
+                   style="width:100%;">
+        </div>
+        <div style="flex:0.6; min-width:120px;">
+            <input id="filterPort" class="filter-input" placeholder="Port (e.g. 80)"
+                   data-tooltip="Filter by source or destination port number — e.g. 80 for HTTP, 443 for HTTPS"
+                   style="width:100%;">
+        </div>
+        <div style="flex:0.8; min-width:130px;">
+            <input id="filterProtocol" class="filter-input" placeholder="Protocol (HTTP/HTTPS)"
+                   data-tooltip="Filter by protocol name — type HTTP to see only unencrypted traffic"
+                   style="width:100%;">
+        </div>
+        <button class="btn btn-secondary" onclick="clearFilters()" style="white-space:nowrap;"
+                data-tooltip="Reset all filters and show all captured packets">
+            <i class="fa-solid fa-xmark fa-xs"></i> Clear Filters
+        </button>
+    </div>
+    <div id="filter-count" style="margin-top:8px; font-size:11px; color:var(--text-muted);"></div>
+</div>
+
+<!-- Packets Table -->
+<div class="card" style="padding:0; overflow:hidden;">
+    <div class="table-wrapper">
+        <table id="packets-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Protocol</th>
+                    <th>Method</th>
+                    <th>Length</th>
+                    <th>Secure</th>
+                </tr>
+            </thead>
+            <tbody id="packets-tbody">
+                <tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">
+                    <i class="fa-solid fa-satellite-dish fa-lg" style="display:block; margin-bottom:10px; color:var(--gold-dark);"></i>
+                    No packets captured yet — start sniffing from the <a href="/sniffer" style="color:var(--gold-primary);">Sniffer</a> page
+                </td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Packet Detail Modal -->
+<div id="packetModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:2000; overflow:auto; backdrop-filter:blur(4px);">
+    <div style="background:var(--bg-medium); margin:5% auto; padding:24px; width:88%; max-width:820px; border-radius:12px; border:1px solid var(--gold-dark); animation:fadeIn 0.25s ease;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-gold); padding-bottom:12px;">
+            <h3 style="color:var(--gold-primary); margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-file-magnifying-glass"></i> Packet Details
+            </h3>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn btn-secondary" onclick="copyPayload()"
+                        data-tooltip="Copy the full packet details to clipboard">
+                    <i class="fa-solid fa-copy fa-xs"></i> Copy
+                </button>
+                <span onclick="closeModal()" style="cursor:pointer; font-size:22px; color:var(--text-muted); line-height:1; transition:color 0.15s;"
+                      onmouseover="this.style.color='#FF4444'" onmouseout="this.style.color='var(--text-muted)'">✕</span>
+            </div>
+        </div>
+        <div id="modalContent" style="max-height:65vh; overflow-y:auto;"></div>
+    </div>
+</div>
+
+<style>
+.sensitive { background:#FF4444; color:#fff; padding:1px 4px; border-radius:3px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+#packets-tbody tr { transition: background 0.12s; }
+</style>
+
+<script>
+let allPackets = [];
+
+function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function highlightSensitive(text) {
+    if (!text) return text;
+    let out = escapeHtml(text);
+    out = out.replace(/\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\b/g,
+        '<span style="background:#003366; color:#66ccff; padding:1px 5px; border-radius:3px; font-weight:700;">$1</span>');
+    ['username','user','uname','email','password','pass','pwd','auth','token','secret','api_key','apikey','access_token'].forEach(k => {
+        out = out.replace(new RegExp(`(${k}=[^&\\s"']*)`, 'gi'), '<span class="sensitive">$1</span>');
+        out = out.replace(new RegExp(`"${k}"\\s*:\\s*"([^"]*)"`, 'gi'), (m,v) => `"${k}":"<span class="sensitive">${v}</span>"`);
+    });
+    out = out.replace(/(Authorization:\s*Basic\s+[A-Za-z0-9+/=]+)/gi, '<span class="sensitive">$1</span>');
+    return out;
+}
+
+function updateStats(pkts) {
+    document.getElementById('totalPackets').textContent    = pkts.length;
+    document.getElementById('securePackets').textContent   = pkts.filter(p => p.is_secure).length;
+    document.getElementById('insecurePackets').textContent = pkts.filter(p => !p.is_secure).length;
+    document.getElementById('protocolCount').textContent   = new Set(pkts.map(p => p.protocol)).size;
+}
+
+function renderTable(pkts) {
+    const tbody = document.getElementById('packets-tbody');
+    tbody.innerHTML = '';
+    if (!pkts.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted);">
+            <i class="fa-solid fa-filter fa-lg" style="display:block; margin-bottom:8px;"></i>
+            No packets match your current filters</td></tr>`;
+        return;
+    }
+    pkts.forEach(pkt => {
+        const row = tbody.insertRow();
+        row.onclick = () => showPacketDetails(pkt);
+        row.style.cursor = 'pointer';
+        row.title = 'Click to inspect payload';
+
+        const proto  = (pkt.protocol || '').toUpperCase();
+        const isHTTP = proto === 'HTTP';
+        const isHTTPS= proto === 'HTTPS';
+        const badgeCls = isHTTP ? 'badge badge-http' : isHTTPS ? 'badge badge-https' : 'badge badge-intercept';
+
+        row.insertCell().textContent = pkt.timestamp || '—';
+        row.insertCell().textContent = `${pkt.src_ip || '—'}:${pkt.src_port || '—'}`;
+        row.insertCell().textContent = `${pkt.dst_ip || '—'}:${pkt.dst_port || '—'}`;
+        row.insertCell().innerHTML   = `<span class="${badgeCls}">${proto || '—'}</span>`;
+        row.insertCell().textContent = pkt.method || '—';
+        row.insertCell().textContent = pkt.length  || '—';
+        row.insertCell().innerHTML   = pkt.is_secure
+            ? '<i class="fa-solid fa-lock" style="color:#44BB44;" title="Encrypted HTTPS"></i>'
+            : '<i class="fa-solid fa-lock-open" style="color:#FF4444;" title="Unencrypted HTTP"></i>';
+    });
+}
+
+function showPacketDetails(pkt) {
+    const html = `
+        <div class="meta-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin-bottom:14px;">
+            ${[['Source', `${pkt.src_ip}:${pkt.src_port}`], ['Destination', `${pkt.dst_ip}:${pkt.dst_port}`],
+               ['Protocol', pkt.protocol], ['Method', pkt.method||'—'], ['Secure', pkt.is_secure?'🔒 HTTPS':'🔓 HTTP'],
+               ['Length', pkt.length], ['Time', pkt.timestamp]].map(([k,v]) => `
+            <div class="meta-item">
+                <span class="meta-key">${escapeHtml(k)}</span>
+                <span class="meta-val">${escapeHtml(String(v||'—'))}</span>
+            </div>`).join('')}
+        </div>
+        ${!pkt.is_secure && pkt.data ? `
+        <div style="margin-bottom:8px; color:var(--gold-secondary); font-size:12px; font-weight:600;">
+            <i class="fa-solid fa-triangle-exclamation fa-xs"></i>
+            Sensitive data may be visible in unencrypted HTTP payload:
+        </div>` : ''}
+        <div style="color:var(--text-muted); font-size:12px; margin-bottom:6px; font-weight:600;">
+            <i class="fa-solid fa-box-open fa-xs"></i> Raw Payload:
+        </div>
+        <pre style="max-height:300px; overflow-y:auto;">${pkt.data ? highlightSensitive(pkt.data) : '<span style="color:var(--text-muted);">No payload data</span>'}</pre>
+    `;
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('packetModal').style.display = 'block';
+}
+
+function closeModal() { document.getElementById('packetModal').style.display = 'none'; }
+
+function copyPayload() {
+    const text = document.getElementById('modalContent').innerText;
+    copyToClipboard(text, 'Packet details');
+}
+
+function exportPackets() {
+    if (!allPackets.length) { showWarning('No packets to export — start sniffing first'); return; }
+    let csv = 'Time,Source IP,Source Port,Destination IP,Destination Port,Protocol,Method,Length,Secure,Payload\n';
+    allPackets.forEach(p => {
+        csv += [p.timestamp, p.src_ip, p.src_port, p.dst_ip, p.dst_port, p.protocol, p.method||'',
+                p.data ? p.data.length : p.length, p.is_secure?'Yes':'No',
+                '"' + (p.data||'').replace(/"/g,'""').replace(/\n/g,' ') + '"'].join(',') + '\n';
+    });
+    const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(new Blob([csv], {type:'text/csv'})),
+        download: `silentsnare_packets_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.csv`
+    });
+    a.click();
+    showSuccess(`Exported ${allPackets.length} packet(s) to CSV`);
+}
+
+function clearFilters() {
+    document.getElementById('filterIP').value = '';
+    document.getElementById('filterPort').value = '';
+    document.getElementById('filterProtocol').value = '';
+    filterTable();
+    showInfo('Filters cleared');
+}
+
+function filterTable() {
+    const ip    = document.getElementById('filterIP').value.trim().toLowerCase();
+    const port  = document.getElementById('filterPort').value.trim();
+    const proto = document.getElementById('filterProtocol').value.trim().toLowerCase();
+    const filtered = allPackets.filter(p => {
+        const ipMatch    = !ip    || (p.src_ip||'').includes(ip) || (p.dst_ip||'').includes(ip);
+        const portMatch  = !port  || p.src_port == port || p.dst_port == port;
+        const protoMatch = !proto || (p.protocol||'').toLowerCase().includes(proto);
+        return ipMatch && portMatch && protoMatch;
+    });
+    renderTable(filtered);
+    const cnt = document.getElementById('filter-count');
+    if (ip || port || proto) {
+        cnt.textContent = `Showing ${filtered.length} of ${allPackets.length} packet(s)`;
+    } else {
+        cnt.textContent = '';
+    }
+}
+
+function updatePackets() {
+    fetch('/sniffer/get_packets')
+    .then(r => r.json())
+    .then(data => {
+        const pkts = (data.packets || []).sort((a,b) => (b.timestamp||'').localeCompare(a.timestamp||''));
+        const wasEmpty = allPackets.length === 0;
+        allPackets = pkts;
+        updateStats(allPackets);
+        filterTable();
+        if (!wasEmpty && pkts.length > allPackets.length) {
+            showInfo(`${pkts.length - allPackets.length} new packet(s) captured`);
+        }
+    })
+    .catch(() => {}); // silent auto-refresh failures
+}
+
+async function clearAllPackets() {
+    const ok = await confirmAction('Clear ALL captured packets? This cannot be undone.');
+    if (!ok) return;
+    fetch('/sniffer/clear_packets', { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'success') {
+            showWarning('All packets cleared');
+            allPackets = [];
+            updateStats([]);
+            filterTable();
+        } else {
+            showError('Clear failed: ' + (d.message || 'Unknown error'));
+        }
+    })
+    .catch(err => showError('Clear error: ' + err.message));
+}
+
+// Close modal on backdrop click
+document.getElementById('packetModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// Filter listeners
+['filterIP','filterPort','filterProtocol'].forEach(id =>
+    document.getElementById(id).addEventListener('input', filterTable)
+);
+
+// Auto-refresh every 2 seconds
+setInterval(updatePackets, 2000);
+updatePackets();
+</script>
+
+{% endblock %}

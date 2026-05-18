@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>📁 ملفات PCAP المتاحة</h2>
+    <div id="pcap-list">جاري التحميل...</div>
+</div>
+
+<!-- نافذة منبثقة لعرض المحتوى -->
+<div id="pcapModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.8);">
+    <div style="background-color:#1a1a1a; margin:5% auto; padding:20px; border:2px solid #d4af37; width:80%; max-width:800px; border-radius:8px; color:#e0e0e0;">
+        <div style="display:flex; justify-content:space-between;">
+            <h3 style="color:#d4af37;">📄 محتوى الملف</h3>
+            <span onclick="closeModal()" style="cursor:pointer; font-size:28px;">&times;</span>
+        </div>
+        <div id="modalContent" style="max-height:400px; overflow-y:auto; background:#111; padding:1rem; border-radius:4px;">
+            <!-- المحتوى يظهر هنا -->
+        </div>
+        <div style="text-align:left; margin-top:20px;">
+            <button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function closeModal() {
+    document.getElementById('pcapModal').style.display = 'none';
+}
+
+function viewPcap(filename) {
+    fetch('/view_pcap/' + filename)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('pcapModal').style.display = 'block';
+        })
+        .catch(err => {
+            alert('خطأ في تحميل المحتوى');
+        });
+}
+
+function fetchPcaps() {
+    fetch('/api/pcaps')
+        .then(res => res.json())
+        .then(files => {
+            const container = document.getElementById('pcap-list');
+            container.innerHTML = '';
+            if (files.length === 0) {
+                container.innerHTML = '<p>لا توجد ملفات PCAP</p>';
+                return;
+            }
+            const ul = document.createElement('ul');
+            files.forEach(file => {
+                const li = document.createElement('li');
+                li.innerHTML = `${file.name} - 
+                    <a href="#" onclick="viewPcap('${file.name}'); return false;" class="btn btn-secondary">عرض</a> |
+                    <a href="/download/${file.name}" class="btn btn-secondary">تحميل</a>`;
+                ul.appendChild(li);
+            });
+            container.appendChild(ul);
+        })
+        .catch(err => {
+            document.getElementById('pcap-list').innerHTML = '<p style="color:#ff6b6b;">خطأ في التحميل</p>';
+        });
+}
+
+fetchPcaps();
+</script>
+{% endblock %}

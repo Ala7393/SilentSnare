@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilentSnare – MITM Educational Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Preconnect for faster external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Load fonts asynchronously -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+    
+    <!-- Load Font Awesome locally or with fallback -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" 
+          integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" 
+          crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></noscript>
+</head>
+<body>
+
+    <!-- ===== SITE HEADER ===== -->
+    <header class="site-header" style="position:sticky; top:0; z-index:1000;">
+        <canvas id="header-particles" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0; display:none;"></canvas>
+
+        <!-- Top bar: window controls + brand + nav-actions + user -->
+        <div class="header-brand-bar" style="position:relative; z-index:1;">
+
+            <!-- Window Controls (Kali-style) -->
+            <div class="win-controls">
+                <button class="win-btn win-close"    onclick="winClose()"    title="Close"><span></span></button>
+                <button class="win-btn win-minimize" onclick="winMinimize()" title="Minimize"><span></span></button>
+                <button class="win-btn win-maximize" onclick="winMaximize()" title="Maximize"><span></span></button>
+            </div>
+
+            <!-- Back / Forward -->
+            <div class="nav-history-btns">
+                <button class="hist-btn" id="histBack" onclick="historyBack()" title="Back" disabled>
+                    <i class="fa-solid fa-chevron-left"></i>
+                    <span>Back</span>
+                </button>
+                <button class="hist-btn" id="histFwd" onclick="historyForward()" title="Forward" disabled>
+                    <span>Forward</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Brand -->
+            <div class="header-brand">
+                <div class="header-icon-wrap">
+                    <i class="fa-solid fa-crosshairs"></i>
+                </div>
+                <div class="header-title-group">
+                    <span class="header-title">SilentSnare</span>
+                    <span class="header-subtitle">MITM Educational Platform</span>
+                </div>
+            </div>
+
+            <!-- Right side: Event Log + User -->
+            <div style="display:flex; align-items:center; gap:10px; margin-left:auto;">
+
+                <!-- Event Log Button -->
+                {% if session.user_id %}
+                <button class="event-log-btn" id="evtLogToggle" onclick="toggleEventLog()" title="Event Log">
+                    <i class="fa-solid fa-terminal"></i>
+                    <span>Event Log</span>
+                    <span class="evt-badge" id="evtBadge">0</span>
+                </button>
+                {% endif %}
+
+                {% if session.user_id %}
+                <div class="header-user">
+                    <div class="header-user-badge">
+                        <i class="fa-solid fa-user-secret"></i>
+                        <span>{{ session.username }}</span>
+                    </div>
+                    <a href="{{ url_for('auth.logout') }}" class="header-logout" data-tooltip="Log out"
+                       onclick="logEvent('auth', 'User logged out')">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
+                {% else %}
+                <div class="header-user">
+                    <a href="{{ url_for('auth.login') }}" class="header-logout">
+                        <i class="fa-solid fa-key"></i>
+                        <span>Login</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bottom bar: full-width nav tabs -->
+        {% if session.user_id %}
+        <nav class="header-nav-bar" style="position:relative; z-index:1;">
+            <a href="{{ url_for('main.educational') }}" class="header-tab"
+               onclick="logEvent('nav', 'Navigated to Educational')">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Educational</span>
+            </a>
+            <a href="{{ url_for('main.inspector') }}" class="header-tab"
+               onclick="logEvent('nav', 'Navigated to Inspector')">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Inspector</span>
+            </a>
+            <a href="{{ url_for('sniffer.index') }}" class="header-tab"
+               onclick="logEvent('nav', 'Navigated to Sniffer')">
+                <i class="fa-solid fa-satellite-dish"></i>
+                <span>Sniffer</span>
+            </a>
+            <a href="{{ url_for('scenarios.index') }}" class="header-tab"
+               onclick="logEvent('nav', 'Navigated to Scenario 1')">
+                <i class="fa-solid fa-circle-nodes"></i>
+                <span>Scenario 1</span>
+            </a>
+            <a href="{{ url_for('scenario2.index') }}" class="header-tab"
+               onclick="logEvent('nav', 'Navigated to Scenario 2')">
+                <i class="fa-solid fa-envelope-open-text"></i>
+                <span>Scenario 2</span>
+            </a>
+            <a href="{{ url_for('admin.index') }}" class="header-tab"
+               onclick="logEvent('nav', 'Navigated to Admin')">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Admin</span>
+            </a>
+        </nav>
+        {% endif %}
+
+    </header>
+
+    <!-- ===== EVENT LOG PANEL ===== -->
+    <div id="eventLogPanel" class="evt-panel">
+        <div class="evt-panel-header">
+            <div style="display:flex; align-items:center; gap:9px;">
+                <i class="fa-solid fa-terminal" style="color:var(--gold-primary);"></i>
+                <span style="color:var(--gold-primary); font-weight:700; font-size:0.88rem; letter-spacing:1px; text-transform:uppercase;">Event Log</span>
+                <span class="evt-live-dot"></span>
+            </div>
+            <div style="display:flex; gap:7px; align-items:center;">
+                <button class="evt-clear-btn" onclick="clearEventLog()" title="Clear Log">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <button class="evt-close-btn" onclick="toggleEventLog()" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <div class="evt-panel-body" id="evtLogBody">
+            <div class="evt-empty" id="evtEmpty">
+                <i class="fa-solid fa-circle-dot" style="font-size:1.4rem; color:rgba(255,215,0,0.2); margin-bottom:8px;"></i>
+                <span>No events recorded yet</span>
+            </div>
+        </div>
+        <div class="evt-panel-footer">
+            <span id="evtCount" style="color:var(--text-muted); font-size:10px;">0 events</span>
+            <span style="color:rgba(212,175,55,0.4); font-size:10px;">SilentSnare v2.0</span>
+        </div>
+    </div>
+    <div id="evtOverlay" class="evt-overlay" onclick="toggleEventLog()"></div>
+
+    <!-- ===== TASKBAR (minimized state) ===== -->
+    <div id="siteTaskbar" class="site-taskbar" style="display:none;">
+        <button class="taskbar-restore" onclick="winRestore()">
+            <i class="fa-solid fa-crosshairs"></i>
+            <span>SilentSnare</span>
+            <i class="fa-solid fa-up-right-from-square" style="font-size:9px; opacity:0.6; margin-left:4px;"></i>
+        </button>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="container" id="mainContent">
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message" data-category="{{ category }}"
+                         style="display:none;">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts with defer -->
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/particles.js') }}" defer></script>
+    <script defer>
+    // ══════════════════════════════════════════════════════
+    //  WINDOW CONTROLS
+    // ══════════════════════════════════════════════════════
+    let _minimized = false;
+
+    function winClose() {
+        logEvent('window', 'Window closed (session ended)');
+        setTimeout(() => { window.location.href = "{{ url_for('auth.logout') }}"; }, 200);
+    }
+
+    function winMinimize() {
+        _minimized = true;
+        logEvent('window', 'Window minimized to taskbar');
+        document.getElementById('mainContent').style.display = 'none';
+        document.querySelector('.site-header').style.display = 'none';
+        document.getElementById('siteTaskbar').style.display = 'flex';
+    }
+
+    function winRestore() {
+        _minimized = false;
+        logEvent('window', 'Window restored from taskbar');
+        document.getElementById('mainContent').style.display = '';
+        document.querySelector('.site-header').style.display = '';
+        document.getElementById('siteTaskbar').style.display = 'none';
+    }
+
+    function winMaximize() {
+        logEvent('window', document.fullscreenElement ? 'Window exited fullscreen' : 'Window maximized (fullscreen)');
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  BACK / FORWARD HISTORY
+    // ══════════════════════════════════════════════════════
+    function updateHistoryBtns() {
+        const back = document.getElementById('histBack');
+        const fwd  = document.getElementById('histFwd');
+        if (!back || !fwd) return;
+        back.disabled = (window.history.length <= 1);
+        fwd.disabled  = false;
+    }
+
+    function historyBack() {
+        logEvent('nav', 'Navigated back in history');
+        window.history.back();
+    }
+
+    function historyForward() {
+        logEvent('nav', 'Navigated forward in history');
+        window.history.forward();
+    }
+
+    window.addEventListener('popstate', updateHistoryBtns);
+    updateHistoryBtns();
+
+    // ══════════════════════════════════════════════════════
+    //  ACTIVE TAB
+    // ══════════════════════════════════════════════════════
+    (function() {
+        const cur = window.location.pathname;
+        document.querySelectorAll('.header-tab[href]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (href && cur === href) a.classList.add('nav-active');
+            else if (href && href !== '/' && cur.startsWith(href)) a.classList.add('nav-active');
+        });
+    })();
+
+    // ══════════════════════════════════════════════════════
+    //  HEADER PARTICLES — Lazy load only when header is visible
+    // ══════════════════════════════════════════════════════
+    let particlesStarted = false;
+    function startParticles() {
+        if (particlesStarted) return;
+        particlesStarted = true;
+        const canvas = document.getElementById('header-particles');
+        if (canvas && window.initParticles) {
+            canvas.style.display = 'block';
+            window.initParticles('header-particles', {
+                count: 15,           // reduced from 25
+                speed: 0.18,
+                dotRadius: 1.2,
+                maxDist: 80,
+                dotOpacity: 0.28,
+                lineOpacity: 0.07
+            });
+        }
+    }
+    // Use IntersectionObserver to start particles only when header enters viewport
+    const header = document.querySelector('.site-header');
+    if (header && 'IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                startParticles();
+                observer.disconnect();
+            }
+        }, { threshold: 0.1 });
+        observer.observe(header);
+    } else {
+        // fallback: start after load
+        window.addEventListener('load', startParticles);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  EVENT LOG SYSTEM — Comprehensive Activity Tracker
+    // ══════════════════════════════════════════════════════════════════
+
+    const EVT_ICONS = {
+        nav:     '<i class="fa-solid fa-arrow-right-arrow-left" style="color:#44AAFF;"></i>',
+        window:  '<i class="fa-solid fa-window-restore" style="color:#FFAA44;"></i>',
+        auth:    '<i class="fa-solid fa-user-secret" style="color:#AA44FF;"></i>',
+        attack:  '<i class="fa-solid fa-skull-crossbones" style="color:#FF4444;"></i>',
+        stop:    '<i class="fa-solid fa-stop" style="color:#FF8888;"></i>',
+        edit:    '<i class="fa-solid fa-pen-to-square" style="color:#FFDD44;"></i>',
+        info:    '<i class="fa-solid fa-circle-info" style="color:#44BB44;"></i>',
+        error:   '<i class="fa-solid fa-triangle-exclamation" style="color:#FF4444;"></i>',
+        click:   '<i class="fa-solid fa-computer-mouse" style="color:#FFAA44;"></i>',
+        hover:   '<i class="fa-solid fa-hand-pointer" style="color:#888;"></i>',
+        input:   '<i class="fa-solid fa-keyboard" style="color:#FFED4E;"></i>',
+        api:     '<i class="fa-solid fa-satellite-dish" style="color:#44AAFF;"></i>',
+        api_get: '<i class="fa-solid fa-satellite-dish" style="color:rgba(68,170,255,0.45);"></i>',
+        scroll:  '<i class="fa-solid fa-arrows-up-down" style="color:#666;"></i>',
+        key:     '<i class="fa-solid fa-keyboard" style="color:#CC88FF;"></i>',
+        status:  '<i class="fa-solid fa-signal" style="color:#44BB44;"></i>',
+        packet:  '<i class="fa-solid fa-network-wired" style="color:#FFAA00;"></i>',
+        scan:    '<i class="fa-solid fa-radar" style="color:#FFAA44;"></i>',
+        tab:     '<i class="fa-solid fa-table-columns" style="color:#44AAFF;"></i>',
+    };
+
+    // ════════════════════════════════════════════════════════════════════
+    //  EVENT LOG — Queue-based, zero DOM-on-input, batch render @ 150ms
+    // ════════════════════════════════════════════════════════════════════
+
+    let evtLogList   = [];      // master list (in memory only)
+    let _evtQueue    = [];      // pending entries not yet in DOM
+    let evtPanelOpen = false;
+    let _renderTimer = null;
+    let _badgeTimer  = null;
+    let _badgeDirty  = false;
+
+    // Throttle state — lightweight primitives, no DOM
+    let _lastHoverEl  = null;
+    let _lastHoverTs  = 0;
+    let _lastScrollTs = 0;
+    let _lastScrollPc = -1;
+    const _inputDbc   = {};
+
+    // ── Escape HTML ─────────────────────────────────────────────────────
+    function _esc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── Build HTML string for one entry (no DOM ops) ────────────────────
+    function _entryHTML(e) {
+        return '<div class="evt-entry">' +
+            '<span class="evt-entry-icon">' + (EVT_ICONS[e.type] || EVT_ICONS.info) + '</span>' +
+            '<div class="evt-entry-body">' +
+            '<span class="evt-entry-msg">' + _esc(e.message) + '</span>' +
+            (e.detail ? '<span class="evt-entry-detail">' + _esc(e.detail) + '</span>' : '') +
+            '</div><span class="evt-entry-ts">' + e.ts + '</span></div>';
+    }
+
+    // ── Flush queue to DOM (called by timer, NOT on every event) ────────
+    function _flushQueue() {
+        _renderTimer = null;
+        if (_evtQueue.length === 0) return;
+
+        const body  = document.getElementById('evtLogBody');
+        const empty = document.getElementById('evtEmpty');
+        if (!body) { _evtQueue = []; return; }
+
+        // Build fragment string for all pending entries (newest first = prepend)
+        let html = '';
+        _evtQueue.forEach(e => { html += _entryHTML(e); });
+        _evtQueue = [];
+
+        if (empty) empty.style.display = 'none';
+
+        // Insert all at once — single reflow
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        const frag = document.createDocumentFragment();
+        while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+        body.insertBefore(frag, body.firstChild);
+
+        // Trim excess DOM entries (max 100 visible)
+        const all = body.children;
+        while (all.length > 102) body.removeChild(body.lastChild); // 100 entries + empty div
+    }
+
+    // ── Badge update — debounced 200ms, single text update only ─────────
+    function _scheduleBadge() {
+        if (_badgeTimer) return;
+        _badgeTimer = setTimeout(() => {
+            _badgeTimer = null;
+            const badge = document.getElementById('evtBadge');
+            const count = document.getElementById('evtCount');
+            if (badge) badge.textContent = evtLogList.length;
+            if (count) count.textContent = evtLogList.length + ' event' + (evtLogList.length !== 1 ? 's' : '');
+        }, 200);
+    }
+
+    // ── Core log — ZERO DOM ops, just push to queues ────────────────────
+    function logEvent(type, message, detail) {
+        const now = new Date();
+        const ts  = now.toLocaleTimeString('en-US', { hour12: false });
+        const entry = { type, message, detail: detail || '', ts };
+        evtLogList.unshift(entry);
+        if (evtLogList.length > 500) evtLogList.length = 500;
+
+        // Only queue for DOM if panel is open (saves work when closed)
+        if (evtPanelOpen) {
+            _evtQueue.unshift(entry);
+            if (!_renderTimer) _renderTimer = setTimeout(_flushQueue, 150);
+        }
+
+        _scheduleBadge();
+        return entry;
+    }
+
+    // Full re-render when panel opens
+    function _fullRender() {
+        const body  = document.getElementById('evtLogBody');
+        const empty = document.getElementById('evtEmpty');
+        if (!body) return;
+        body.querySelectorAll('.evt-entry').forEach(e => e.remove());
+        _evtQueue = [];
+        if (evtLogList.length === 0) { if (empty) empty.style.display = 'flex'; return; }
+        if (empty) empty.style.display = 'none';
+        const frag = document.createDocumentFragment();
+        evtLogList.slice(0, 100).forEach(e => {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = _entryHTML(e);
+            frag.appendChild(tmp.firstChild);
+        });
+        body.appendChild(frag);
+    }
+
+    function clearEventLog() {
+        evtLogList = [];
+        _evtQueue  = [];
+        const body  = document.getElementById('evtLogBody');
+        const empty = document.getElementById('evtEmpty');
+        if (body)  body.querySelectorAll('.evt-entry').forEach(e => e.remove());
+        if (empty) empty.style.display = 'flex';
+        _scheduleBadge();
+    }
+
+    function toggleEventLog() {
+        evtPanelOpen = !evtPanelOpen;
+        const panel   = document.getElementById('eventLogPanel');
+        const overlay = document.getElementById('evtOverlay');
+        if (panel)   panel.classList.toggle('evt-panel-open', evtPanelOpen);
+        if (overlay) overlay.classList.toggle('evt-overlay-show', evtPanelOpen);
+        if (evtPanelOpen) _fullRender();  // render on open, not during close
+    }
+
+    // ── Smart label (pure string ops, no DOM queries) ───────────────────
+    function _labelOf(el) {
+        if (!el) return '';
+        if (el.dataset && el.dataset.logLabel) return el.dataset.logLabel;
+        if (el.getAttribute && el.getAttribute('aria-label')) return el.getAttribute('aria-label');
+        if (el.dataset && el.dataset.tooltip) return el.dataset.tooltip.slice(0, 60);
+        const txt = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 50);
+        if (txt) return txt;
+        if (el.placeholder) return el.placeholder;
+        if (el.name) return el.name;
+        if (el.id)   return '#' + el.id;
+        return el.tagName.toLowerCase();
+    }
+
+    // ── Classify click (string ops only) ────────────────────────────────
+    function _classifyClick(el) {
+        const txt = (el.innerText || el.textContent || '').toLowerCase();
+        const tip = (el.dataset.tooltip || '').toLowerCase();
+        const all = txt + tip;
+        if (/(start attack|start arp|launch attack|بدء)/i.test(all))                          return { type:'attack', prefix:'Attack started' };
+        if (/(stop attack|stop arp|إيقاف|stop)/i.test(all) && /(arp|sniff)/i.test(all))       return { type:'stop',   prefix:'Attack stopped' };
+        if (/(scan network|scan)/i.test(all))                                                   return { type:'scan',   prefix:'Network scan' };
+        if (/(start sniff)/i.test(all))                                                         return { type:'attack', prefix:'Sniffer started' };
+        if (/(stop sniff)/i.test(all))                                                          return { type:'stop',   prefix:'Sniffer stopped' };
+        if (/(start smtp|smtp server)/i.test(all))                                              return { type:'attack', prefix:'SMTP server started' };
+        if (/(stop smtp)/i.test(all))                                                           return { type:'stop',   prefix:'SMTP stopped' };
+        if (/(intercept|capture|release|drop|forward)/i.test(all))                             return { type:'edit',   prefix:'Packet action' };
+        if (/(logout|log out|sign out)/i.test(all))                                             return { type:'auth',   prefix:'Logout' };
+        if (/(login|sign in)/i.test(all))                                                       return { type:'auth',   prefix:'Login' };
+        if (el.tagName === 'A' || el.classList.contains('header-tab'))                          return { type:'nav',    prefix:'Link' };
+        if (el.closest('.win-controls'))                                                        return { type:'window', prefix:'Window' };
+        return { type:'click', prefix:'Clicked' };
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  GLOBAL LISTENERS — all passive/non-blocking
+    // ════════════════════════════════════════════════════════════════════
+
+    // 1. CLICKS — single delegated listener, capture phase ───────────────
+    document.addEventListener('click', function(e) {
+        const el = e.target.closest('button,a,.btn,.nav-btn,.header-tab,.hist-btn,.win-btn,.event-log-btn,.taskbar-restore,.stat-card,.step-card,.admin-stat-card');
+        if (!el || el.closest('#eventLogPanel')) return;
+        const { type, prefix } = _classifyClick(el);
+        const lbl    = _labelOf(el);
+        const detail = el.href ? (() => { try { return new URL(el.href, location.href).pathname; } catch(x) { return ''; } })() : (el.id ? '#' + el.id : '');
+        logEvent(type, prefix + (lbl ? ': ' + lbl : ''), detail || undefined);
+    }, true);
+
+    // 2. HOVER — use mouseenter on interactive elements (no bubbling = cheap)
+    //    Delegated via mousemove with 300ms throttle to avoid frequent closest()
+    let _mvTimer = null;
+    document.addEventListener('mousemove', function(e) {
+        if (_mvTimer) return;
+        _mvTimer = setTimeout(() => {
+            _mvTimer = null;
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            if (!el) return;
+            const tgt = el.closest('button,.btn,.nav-btn,.header-tab,.hist-btn,.win-btn,.event-log-btn,[data-tooltip]');
+            if (!tgt || tgt.closest('#eventLogPanel')) return;
+            if (tgt === _lastHoverEl) return;           // same element, skip
+            _lastHoverEl = tgt;
+            const lbl = _labelOf(tgt);
+            if (lbl) logEvent('hover', 'Hover: ' + lbl, tgt.dataset.tooltip ? tgt.dataset.tooltip.slice(0,55) : undefined);
+        }, 300);
+    }, { passive: true });
+
+    // Reset hover element when mouse leaves window
+    document.addEventListener('mouseleave', () => { _lastHoverEl = null; });
+
+    // 3. INPUT (debounced 800ms) ─────────────────────────────────────────
+    document.addEventListener('input', function(e) {
+        const el = e.target;
+        if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA') return;
+        const key = el.name || el.id || 'field';
+        clearTimeout(_inputDbc[key]);
+        _inputDbc[key] = setTimeout(() => {
+            const val = el.type === 'password' ? '••••••' : el.value.slice(0, 40);
+            logEvent('input', 'Input: ' + key, val);
+        }, 800);
+    }, { passive: true });
+
+    // 4. SELECT / CHECKBOX / RADIO ───────────────────────────────────────
+    document.addEventListener('change', function(e) {
+        const el = e.target;
+        if (el.tagName === 'SELECT') {
+            logEvent('input', 'Selected: ' + (el.name || el.id || 'select'), (el.options[el.selectedIndex]?.text || el.value).slice(0,50));
+        } else if (el.type === 'checkbox') {
+            logEvent('input', (el.checked ? 'Checked' : 'Unchecked') + ': ' + (el.name || el.id || 'checkbox'));
+        }
+    }, { passive: true });
+
+    // 5. FOCUS (only log, no DOM on hover) ───────────────────────────────
+    document.addEventListener('focusin', function(e) {
+        const el = e.target;
+        if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA' && el.tagName !== 'SELECT') return;
+        logEvent('input', 'Focus: ' + (el.name || el.id || el.placeholder || el.tagName.toLowerCase()));
+    }, { passive: true });
+
+    // 6. FORM SUBMIT ─────────────────────────────────────────────────────
+    document.addEventListener('submit', function(e) {
+        const form   = e.target;
+        const action = form.action || window.location.href;
+        let path;
+        try { path = new URL(action, location.href).pathname; } catch(x) { path = action; }
+        logEvent('edit', 'Form submitted', form.dataset.logLabel || path);
+    }, true);
+
+    // 7. FETCH intercept — pure JS, no DOM ──────────────────────────────
+    (function() {
+        const _fetch = window.fetch;
+        const SILENT = new Set(['/api/recent_packets','/api/protocol_stats',
+            '/scenario2/arp_status','/scenarios/arp_status',
+            '/scenarios/http_intercept_status','/sniffer/status']);
+
+        window.fetch = function(url, opts) {
+            const method = (opts && opts.method) ? opts.method.toUpperCase() : 'GET';
+            const raw    = typeof url === 'string' ? url : (url.url || String(url));
+            const path   = raw.split('?')[0];
+            if (!SILENT.has(path)) {
+                logEvent(method === 'GET' ? 'api_get' : 'api', method + ' ' + path);
+            }
+            return _fetch.apply(this, arguments).then(resp => {
+                if (method !== 'GET' && !resp.ok)
+                    logEvent('error', 'API ' + resp.status + ': ' + method + ' ' + path);
+                return resp;
+            });
+        };
+    })();
+
+    // 8. KEYBOARD SHORTCUTS ──────────────────────────────────────────────
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.altKey || e.metaKey) {
+            logEvent('key', 'Key: ' + (e.ctrlKey?'Ctrl+':'') + (e.altKey?'Alt+':'') + (e.metaKey?'Meta+':'') + e.key);
+        } else if (e.key === 'Escape') {
+            if (evtPanelOpen) toggleEventLog();
+        }
+    });
+
+    // 9. SCROLL — passive, aggressive throttle (2s, 8% threshold) ───────
+    document.addEventListener('scroll', function() {
+        const now = Date.now();
+        if (now - _lastScrollTs < 2000) return;
+        _lastScrollTs = now;
+        const doc = document.documentElement;
+        const pct = Math.round(doc.scrollTop / Math.max(1, doc.scrollHeight - doc.clientHeight) * 100);
+        if (Math.abs(pct - _lastScrollPc) < 8) return;
+        _lastScrollPc = pct;
+        logEvent('scroll', 'Scrolled ' + pct + '%');
+    }, { passive: true });
+
+    // 10. VISIBILITY + FULLSCREEN ────────────────────────────────────────
+    document.addEventListener('visibilitychange', () =>
+        logEvent('window', document.hidden ? 'Tab hidden' : 'Tab visible'));
+    document.addEventListener('fullscreenchange', () =>
+        logEvent('window', document.fullscreenElement ? 'Fullscreen on' : 'Fullscreen off'));
+
+    // Initial log
+    logEvent('info', 'Page loaded', window.location.pathname);
+
+    window.logEvent = logEvent;
+
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,43 @@
+# ─── Python ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# ─── Environment Variables (حساسة) ──────────────────
+.env
+.env.local
+.env.*.local
+_.env
+_.env.local
+
+# ─── Database ────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Logs ────────────────────────────────────────────
+logs/
+*.log
+
+# ─── Packet Captures ─────────────────────────────────
+pcaps/
+*.pcap
+*.pcapng
+
+# ─── Backups ─────────────────────────────────────────
+backups/
+
+# ─── IDE ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── OS ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db

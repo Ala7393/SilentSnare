@@ -1,0 +1,615 @@
+<!-- templates/scenario2.html – Scenario 2: SMTP Email Interception -->
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ══════════════ SCENARIO 2 HEADER ══════════════ -->
+<div class="card" style="border-color:rgba(170,68,255,0.5); margin-bottom:14px;">
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <i class="fa-solid fa-envelope-open-text" style="color:#CC88FF; font-size:1.8rem;"></i>
+        <div style="flex:1;">
+            <h2 style="margin:0; color:#CC88FF; font-size:1.15rem;">Scenario 2 — SMTP Email Interception (MITM)</h2>
+            <p style="margin:5px 0 0; color:var(--text-muted); font-size:0.82rem;">
+                Perform ARP spoofing, redirect SMTP traffic to a fake mail server, intercept emails, modify content, and forward to the real server.
+            </p>
+        </div>
+        <a href="/scenarios" class="btn btn-secondary" style="font-size:12px; text-decoration:none;">
+            <i class="fa-solid fa-arrow-left fa-xs"></i> Scenario 1
+        </a>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="card" style="margin-bottom:14px;">
+    <div class="info-text" style="border-left-color:#CC88FF; margin:0;">
+        <strong style="color:#CC88FF;"><i class="fa-solid fa-circle-info fa-xs"></i> Attack Flow:</strong>
+        <div class="steps-grid" style="margin-top:12px;">
+            <div class="step-card">
+                <div class="step-num" style="background:#CC88FF; color:#000;">1</div>
+                <div class="step-icon">🔍</div>
+                <div class="step-title">Scan Network</div>
+                <div class="step-desc">Discover devices on the LAN — find victim and gateway IP addresses</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num" style="background:#CC88FF; color:#000;">2</div>
+                <div class="step-icon">🎭</div>
+                <div class="step-title">ARP Spoofing</div>
+                <div class="step-desc">Poison ARP caches so all traffic flows through your machine</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num" style="background:#CC88FF; color:#000;">3</div>
+                <div class="step-icon">📬</div>
+                <div class="step-title">Intercept Email</div>
+                <div class="step-desc">Redirect SMTP port 25 to a fake server that captures all messages</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num" style="background:#CC88FF; color:#000;">4</div>
+                <div class="step-icon">✏️</div>
+                <div class="step-title">Modify & Forward</div>
+                <div class="step-desc">Edit the email content and forward the modified message to the real server</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ Network Scan + ARP Spoofing ══════════ -->
+<div class="card" style="border-color:rgba(255,170,68,0.4); margin-bottom:14px;">
+
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <i class="fa-solid fa-radar" style="color:#FFAA44;"></i>
+        <h2 style="margin:0; color:#FFAA44; font-size:1rem;">Step 1 — Scan Network & ARP Spoofing</h2>
+    </div>
+
+    <!-- Interface & Scan -->
+    <div style="display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; margin-bottom:14px;">
+        <div style="flex:0.8; min-width:100px;">
+            <div class="field-label">
+                <i class="fa-solid fa-network-wired fa-xs"></i> Interface
+                <span class="help-icon" data-tooltip="Network interface connected to the LAN — e.g. eth0, wlan0. Run 'ip link' to list available interfaces.">?</span>
+            </div>
+            <input type="text" id="mailInterface" value="eth0" placeholder="eth0"
+                   data-tooltip="The network interface to use for ARP spoofing and SMTP interception"
+                   style="width:100%;">
+        </div>
+        <div class="control-group" style="margin:0; gap:8px;">
+            <button class="btn btn-warning" onclick="scanNetwork()"
+                    data-tooltip="Send ARP broadcast to discover all active devices on the LAN (requires root)">
+                <i class="fa-solid fa-radar fa-xs"></i> Scan Network
+            </button>
+        </div>
+    </div>
+
+    <!-- Scan Results -->
+    <div id="scanResult" style="display:none; margin-bottom:14px;">
+        <div style="color:var(--gold-secondary); font-size:0.82rem; font-weight:600; margin-bottom:6px;">
+            <i class="fa-solid fa-list fa-xs"></i> Discovered devices — select for victim/gateway
+        </div>
+        <div id="scanResultContent" class="table-wrapper" style="max-height:180px; overflow-y:auto;"></div>
+    </div>
+
+    <!-- ARP Fields -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 0.6fr; gap:14px; margin-bottom:12px;">
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-skull-crossbones fa-xs"></i> Victim IP
+                <span class="help-icon" data-tooltip="The device whose traffic you want to intercept. Must be on the same LAN. Use Scan Network to discover.">?</span>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <select id="arpVictimSelect" style="flex:1; border-radius:4px;"
+                        data-tooltip="Select victim from scanned devices"
+                        onchange="if(this.value) document.getElementById('arpVictim').value=this.value">
+                    <option value="">— Select —</option>
+                </select>
+                <input type="text" id="arpVictim" placeholder="or type IP" style="flex:1;"
+                       data-tooltip="Type victim IP manually if not in the dropdown">
+            </div>
+        </div>
+
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-route fa-xs"></i> Gateway IP
+                <span class="help-icon" data-tooltip="The router/default gateway — usually 192.168.1.1. Use Scan Network to find it.">?</span>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <select id="arpGatewaySelect" style="flex:1; border-radius:4px;"
+                        data-tooltip="Select gateway from scanned devices"
+                        onchange="if(this.value) document.getElementById('arpGateway').value=this.value">
+                    <option value="">— Select —</option>
+                </select>
+                <input type="text" id="arpGateway" placeholder="or type IP" style="flex:1;"
+                       data-tooltip="Type gateway IP manually if not in the dropdown">
+            </div>
+        </div>
+
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-network-wired fa-xs"></i> ARP Interface
+                <span class="help-icon" data-tooltip="Network interface for the ARP spoofing attack — must be on the same LAN.">?</span>
+            </div>
+            <input type="text" id="arpInterface" value="eth0" placeholder="eth0" style="width:100%;"
+                   data-tooltip="Interface for ARP packets — same as network scan interface">
+        </div>
+    </div>
+
+    <div class="control-group" style="gap:8px; flex-wrap:wrap;">
+        <button class="btn" style="background:#FFAA44; color:#000; font-weight:700;" onclick="startArpSpoof()"
+                data-tooltip="Start ARP cache poisoning — sends forged ARP replies every 2 seconds">
+            <i class="fa-solid fa-play fa-xs"></i> Start ARP Spoofing
+        </button>
+        <button class="btn btn-danger" onclick="stopArpSpoof()"
+                data-tooltip="Stop ARP spoofing and restore original ARP tables on both devices">
+            <i class="fa-solid fa-stop fa-xs"></i> Stop Spoofing
+        </button>
+        <button class="btn btn-secondary" onclick="checkArpStatus()"
+                data-tooltip="Check current ARP spoofing status">
+            <i class="fa-solid fa-rotate fa-xs"></i> Check Status
+        </button>
+    </div>
+
+    <div id="arpStatus" class="status-box status-inactive" style="margin-top:12px;">
+        <i class="fa-solid fa-pause-circle fa-xs"></i> ARP spoofing inactive
+    </div>
+
+</div>
+
+<!-- ══════════ SMTP Interception ══════════ -->
+<div class="card" style="border-color:rgba(170,68,255,0.4);">
+
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <i class="fa-solid fa-envelope" style="color:#CC88FF;"></i>
+        <h2 style="margin:0; color:#CC88FF; font-size:1rem;">Step 2 — SMTP Email Interception</h2>
+    </div>
+
+    <div class="info-text" style="border-left-color:#CC88FF; margin-bottom:14px;">
+        <strong style="color:#CC88FF;"><i class="fa-solid fa-circle-info fa-xs"></i> Note:</strong>
+        ARP spoofing must be active before starting email interception. The fake SMTP server listens on port 25
+        and captures all emails sent by the victim.
+    </div>
+
+    <!-- Mail Client Selection -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:12px;">
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-user fa-xs"></i> Client A (Sender)
+                <span class="help-icon" data-tooltip="The device sending the email — whose SMTP traffic you want to intercept.">?</span>
+            </div>
+            <select id="mailClientA" style="width:100%;"
+                    data-tooltip="Select the sender's IP address from the scanned devices list">
+                <option value="">— Scan network first —</option>
+            </select>
+        </div>
+
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-user fa-xs"></i> Client B (Recipient)
+                <span class="help-icon" data-tooltip="The recipient device. Leave disabled if the mail server is the direct recipient.">?</span>
+            </div>
+            <select id="mailClientB" style="width:100%;"
+                    data-tooltip="Select recipient IP — disable if server is the direct recipient">
+                <option value="">— Scan network first —</option>
+            </select>
+        </div>
+
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-server fa-xs"></i> Real Mail Server
+                <span class="help-icon" data-tooltip="The actual SMTP server IP that the victim is trying to send email to. After modification, the message will be forwarded here.">?</span>
+            </div>
+            <select id="mailServer" style="width:100%;"
+                    data-tooltip="IP of the real SMTP server — modified mail will be forwarded here">
+                <option value="">— Scan network first —</option>
+            </select>
+        </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; padding:10px 14px; background:rgba(0,0,0,0.25); border-radius:4px;">
+        <input type="checkbox" id="serverIsRecipient" style="width:auto; accent-color:var(--gold-primary);">
+        <label for="serverIsRecipient" style="display:inline; font-size:0.85rem; color:var(--text-muted); text-transform:none; letter-spacing:0; font-weight:400; cursor:pointer;"
+               data-tooltip="Check this if the mail server itself is the recipient — no separate Client B needed">
+            Server is the direct recipient (no separate Client B needed)
+        </label>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="control-group" style="gap:8px; flex-wrap:wrap;">
+        <button class="btn" style="background:#CC88FF; color:#000; font-weight:700;" onclick="startMailIntercept()"
+                data-tooltip="Start the fake SMTP server and redirect victim email traffic to it">
+            <i class="fa-solid fa-record-vinyl fa-xs"></i> Start Interception
+        </button>
+        <button class="btn btn-danger" onclick="stopMailIntercept()"
+                data-tooltip="Stop SMTP interception and remove port redirection rules">
+            <i class="fa-solid fa-stop fa-xs"></i> Stop Interception
+        </button>
+    </div>
+
+    <div id="interceptStatus" class="status-box status-inactive" style="margin-top:12px; display:none;">
+        <i class="fa-solid fa-circle-dot fa-xs"></i> Interception active — listening for emails...
+    </div>
+
+    <!-- ══════ Intercepted Email Card ══════ -->
+    <div id="mailMessageCard" style="margin-top:16px; display:none;">
+        <div class="intercept-card" style="border-color:rgba(170,68,255,0.4); background:rgba(170,68,255,0.04);">
+            <h3 style="color:#CC88FF;">
+                <i class="fa-solid fa-envelope-open-text fa-xs"></i>
+                Intercepted Email
+                <span class="badge badge-intercept" style="font-size:10px; margin-left:4px;">EDITABLE</span>
+            </h3>
+
+            <div class="meta-grid" style="margin-bottom:14px;">
+                <div class="meta-item">
+                    <span class="meta-key"><i class="fa-solid fa-user fa-xs"></i> From (MAIL FROM)</span>
+                    <span class="meta-val" id="mailFrom">—</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-key"><i class="fa-solid fa-user-plus fa-xs"></i> To (RCPT TO)</span>
+                    <span class="meta-val" id="mailRcpt">—</span>
+                </div>
+            </div>
+
+            <div class="field-label" style="margin-bottom:6px;">
+                <i class="fa-solid fa-file-lines fa-xs"></i> Message Content
+                <span class="help-icon" data-tooltip="Edit the email content here — you can change the subject, body, or any part of the SMTP message. Click 'Modify & Forward' to send the modified version.">?</span>
+            </div>
+            <textarea id="mailPayload" rows="12"
+                      placeholder="No intercepted message yet — wait for the victim to send an email..."
+                      data-tooltip="Edit the raw SMTP message data — modifications will be forwarded to the real server"></textarea>
+
+            <!-- Action Buttons -->
+            <div class="control-group" style="margin-top:12px; gap:8px; flex-wrap:wrap;">
+                <button class="btn" style="background:#CC88FF; color:#000; font-weight:700;" onclick="modifyAndSendMail()"
+                        data-tooltip="Forward the modified email content to the real SMTP server — victim won't notice">
+                    <i class="fa-solid fa-paper-plane fa-xs"></i> Modify & Forward
+                </button>
+                <button class="btn" style="background:#44BB44; color:#000;" onclick="resendOriginalMail()"
+                        data-tooltip="Forward the original unmodified email to the real server">
+                    <i class="fa-solid fa-rotate-right fa-xs"></i> Resend Original
+                </button>
+                <button class="btn btn-danger" onclick="dropMail()"
+                        data-tooltip="Discard this email — victim's message will be silently dropped">
+                    <i class="fa-solid fa-ban fa-xs"></i> Drop Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let pollingInterval = null;
+let isMailActive   = false;
+let isArpActive    = false;
+let devicesList    = [];
+let isEditing      = false;
+
+function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════ Network Scan ══════
+function scanNetwork() {
+    const iface = document.getElementById('mailInterface').value.trim() || 'eth0';
+    showInfo('Scanning network on ' + iface + ' — please wait...');
+
+    fetch('/scenario2/scan_network', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interface: iface })
+    })
+    .then(res => res.json())
+    .then(data => {
+        const resultDiv = document.getElementById('scanResult');
+        const content   = document.getElementById('scanResultContent');
+
+        if (data.status === 'success') {
+            devicesList = data.devices || [];
+            if (!devicesList.length) {
+                showWarning('No devices found — try a different interface');
+                return;
+            }
+            content.innerHTML = devicesList.map(d => `
+                <div class="device-item" onclick="setTargetFromScan('${escapeHtml(d.ip)}')">
+                    <i class="fa-solid fa-desktop fa-xs" style="color:var(--gold-dark);"></i>
+                    <strong style="color:var(--text-white);">${escapeHtml(d.ip)}</strong>
+                    <span style="color:var(--text-muted); font-size:11px;">${escapeHtml(d.mac || '—')}</span>
+                </div>`).join('');
+            resultDiv.style.display = 'block';
+            populateSelects(devicesList);
+            showSuccess('Found ' + devicesList.length + ' device(s) — select victim and gateway from dropdowns');
+        } else {
+            showError('Scan failed: ' + (data.message || 'Unknown error — root required'));
+        }
+    })
+    .catch(err => showError('Scan error: ' + err.message));
+}
+
+function setTargetFromScan(ip) {
+    document.getElementById('arpVictim').value = ip;
+    const sel = document.getElementById('arpVictimSelect');
+    const opt = Array.from(sel.options).find(o => o.value === ip);
+    if (opt) sel.value = ip;
+    showInfo('Victim IP set to ' + ip);
+}
+
+function populateSelects(devices) {
+    const selects = ['mailClientA', 'mailClientB', 'mailServer', 'arpVictimSelect', 'arpGatewaySelect'];
+    selects.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const first = id.startsWith('arp') ? '— Select device —' : 'Choose IP address';
+        sel.innerHTML = `<option value="">${first}</option>`;
+        devices.forEach(d => {
+            const o = document.createElement('option');
+            o.value = d.ip;
+            o.text  = `${d.ip}  (${d.mac || '?'})`;
+            sel.appendChild(o);
+        });
+    });
+
+    document.getElementById('arpVictimSelect').onchange = function() {
+        document.getElementById('arpVictim').value = this.value;
+    };
+    document.getElementById('arpGatewaySelect').onchange = function() {
+        document.getElementById('arpGateway').value = this.value;
+    };
+}
+
+// ══════ ARP Spoofing ══════
+function startArpSpoof() {
+    const victim  = document.getElementById('arpVictim').value.trim();
+    const gateway = document.getElementById('arpGateway').value.trim();
+    const iface   = document.getElementById('arpInterface').value.trim() || 'eth0';
+
+    if (!victim || !gateway) {
+        showWarning('Please enter both Victim IP and Gateway IP before starting ARP spoofing');
+        return;
+    }
+    if (victim === gateway) {
+        showWarning('Victim and Gateway IP addresses cannot be the same');
+        return;
+    }
+
+    showInfo('Starting ARP spoofing: ' + victim + ' ↔ ' + gateway + ' on ' + iface + '...');
+
+    fetch('/scenario2/start_arp_spoof', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ victim_ip: victim, gateway_ip: gateway, interface: iface })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            isArpActive = true;
+            setArpStatus(true, victim, gateway);
+            showSuccess('ARP spoofing started — victim traffic is now routed through your machine');
+        } else {
+            showError('ARP spoofing failed: ' + (data.message || 'Check root privileges'));
+        }
+    })
+    .catch(err => showError('ARP start error: ' + err.message));
+}
+
+function stopArpSpoof() {
+    fetch('/scenario2/stop_arp_spoof', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        isArpActive = false;
+        setArpStatus(false);
+        if (data.status === 'success') {
+            showWarning('ARP spoofing stopped — ARP tables restored on both devices');
+        } else {
+            showError('Stop failed: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => showError('Stop error: ' + err.message));
+}
+
+function checkArpStatus() {
+    fetch('/scenario2/arp_status')
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'active') {
+            isArpActive = true;
+            setArpStatus(true, data.victim, data.gateway);
+            showInfo('ARP spoofing is active — victim: ' + data.victim + ', gateway: ' + data.gateway);
+        } else {
+            isArpActive = false;
+            setArpStatus(false);
+            showInfo('ARP spoofing is currently inactive');
+        }
+    })
+    .catch(() => showError('Could not reach ARP status endpoint'));
+}
+
+function setArpStatus(active, victim, gateway) {
+    const box = document.getElementById('arpStatus');
+    if (active) {
+        box.className = 'status-box status-active';
+        box.innerHTML = '<i class="fa-solid fa-circle-dot fa-xs"></i> ARP spoofing ACTIVE'
+            + (victim ? ' — victim: <strong>' + escapeHtml(victim) + '</strong> → gateway: <strong>' + escapeHtml(gateway) + '</strong>' : '');
+    } else {
+        box.className = 'status-box status-inactive';
+        box.innerHTML = '<i class="fa-solid fa-pause-circle fa-xs"></i> ARP spoofing inactive';
+    }
+}
+
+// ══════ Mail Interception ══════
+document.getElementById('serverIsRecipient').addEventListener('change', function() {
+    const clientB = document.getElementById('mailClientB');
+    clientB.disabled = this.checked;
+    if (this.checked) clientB.value = '';
+});
+
+function startMailIntercept() {
+    const clientA  = document.getElementById('mailClientA').value;
+    const clientB  = document.getElementById('mailClientB').value;
+    const server   = document.getElementById('mailServer').value;
+    const iface    = document.getElementById('mailInterface').value.trim() || 'eth0';
+    const noClientB = document.getElementById('serverIsRecipient').checked;
+
+    if (!clientA || !server) {
+        showWarning('Please select Client A (sender) and Real Mail Server before starting');
+        return;
+    }
+    if (!noClientB && !clientB) {
+        showWarning('Please select Client B, or check "Server is the direct recipient"');
+        return;
+    }
+    if (!noClientB && (clientA === clientB || clientA === server || clientB === server)) {
+        showWarning('Client A, Client B and Mail Server must all be different IP addresses');
+        return;
+    }
+
+    showInfo('Starting SMTP interception — setting up fake mail server...');
+
+    fetch('/scenario2/start_mail_intercept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            client_a: clientA,
+            client_b: noClientB ? null : clientB,
+            server: server,
+            interface: iface,
+            server_is_recipient: noClientB
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            isMailActive = true;
+            const statusEl = document.getElementById('interceptStatus');
+            statusEl.className = 'status-box status-active';
+            statusEl.style.display = 'flex';
+            statusEl.innerHTML = '<i class="fa-solid fa-circle-dot fa-xs"></i> SMTP interception ACTIVE — waiting for emails...';
+            startPolling();
+            showSuccess('SMTP interception started — waiting for victim to send an email');
+        } else {
+            showError('Failed to start SMTP interception: ' + (data.message || 'Check ARP spoofing is active and root is available'));
+        }
+    })
+    .catch(err => showError('Start error: ' + err.message));
+}
+
+function stopMailIntercept() {
+    fetch('/scenario2/stop_mail_intercept', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        isMailActive = false;
+        stopPolling();
+        const statusEl = document.getElementById('interceptStatus');
+        statusEl.style.display = 'none';
+        document.getElementById('mailMessageCard').style.display = 'none';
+        resetMailDisplay();
+
+        if (data.status === 'success') {
+            showWarning('SMTP interception stopped — port redirection rules removed');
+        } else {
+            showError('Stop failed: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => showError('Stop error: ' + err.message));
+}
+
+function resetMailDisplay() {
+    document.getElementById('mailFrom').textContent = '—';
+    document.getElementById('mailRcpt').textContent = '—';
+    document.getElementById('mailPayload').value = '';
+}
+
+function startPolling() {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(() => {
+        if (!isMailActive) return;
+        fetch('/scenario2/get_mail_message')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success' && data.message) {
+                const msg = data.message;
+                document.getElementById('mailFrom').textContent = msg.mail_from || 'unknown';
+                document.getElementById('mailRcpt').textContent = msg.rcpt_to ? msg.rcpt_to.join(', ') : 'unknown';
+                const card = document.getElementById('mailMessageCard');
+                if (card.style.display === 'none') {
+                    card.style.display = 'block';
+                    showInfo('New email intercepted from ' + (msg.mail_from || 'unknown') + ' — modify and forward');
+                }
+                if (!isEditing) {
+                    document.getElementById('mailPayload').value = msg.data && msg.data.trim() ? msg.data : '(No text content in this message)';
+                }
+            }
+        })
+        .catch(() => {});
+    }, 2000);
+}
+
+function stopPolling() {
+    if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+}
+
+function modifyAndSendMail() {
+    const modified = document.getElementById('mailPayload').value;
+    if (!modified.trim()) {
+        showWarning('Message content is empty — cannot forward an empty email');
+        return;
+    }
+
+    fetch('/scenario2/send_modified_mail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload: modified })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSuccess('Modified email forwarded to the real mail server successfully');
+            document.getElementById('mailMessageCard').style.display = 'none';
+            resetMailDisplay();
+        } else {
+            showError('Forward failed: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => showError('Send error: ' + err.message));
+}
+
+function resendOriginalMail() {
+    fetch('/scenario2/resend_original_mail', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSuccess('Original unmodified email forwarded to the real server');
+            document.getElementById('mailMessageCard').style.display = 'none';
+            resetMailDisplay();
+        } else {
+            showError('Resend failed: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => showError('Resend error: ' + err.message));
+}
+
+function dropMail() {
+    confirmAction('Drop this email? The sender will not receive any confirmation that the message was blocked.').then(ok => {
+        if (!ok) return;
+        fetch('/scenario2/drop_mail', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            showWarning('Email dropped — message discarded without forwarding');
+            document.getElementById('mailMessageCard').style.display = 'none';
+            resetMailDisplay();
+        })
+        .catch(err => showError('Drop error: ' + err.message));
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('mailPayload');
+    textarea.addEventListener('focus', () => { isEditing = true; });
+    textarea.addEventListener('blur',  () => { isEditing = false; });
+    resetMailDisplay();
+    checkArpStatus();
+});
+
+window.addEventListener('beforeunload', function() {
+    if (isMailActive)  stopMailIntercept();
+    if (isArpActive)   stopArpSpoof();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Admin particles background -->
+<canvas id="admin-particles" style="position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;"></canvas>
+
+<div class="admin-page-wrapper">
+
+    <!-- Page header -->
+    <div class="admin-page-header">
+        <div class="admin-header-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+            <div class="admin-header-title">Admin Panel</div>
+            <div class="admin-header-sub">Manage platform credentials & security settings</div>
+        </div>
+        <div class="admin-status-badge">
+            <span class="admin-status-dot"></span>
+            <span>System Online</span>
+        </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="admin-stats-row">
+        <div class="admin-stat-card">
+            <i class="fa-solid fa-user-secret" style="color:#AA44FF; font-size:1.4rem;"></i>
+            <div>
+                <div class="admin-stat-val" style="color:#AA44FF;">{{ session.username }}</div>
+                <div class="admin-stat-lbl">Active User</div>
+            </div>
+        </div>
+        <div class="admin-stat-card">
+            <i class="fa-solid fa-clock" style="color:#44AAFF; font-size:1.4rem;"></i>
+            <div>
+                <div class="admin-stat-val" style="color:#44AAFF;" id="adminClock">--:--:--</div>
+                <div class="admin-stat-lbl">Session Time</div>
+            </div>
+        </div>
+        <div class="admin-stat-card">
+            <i class="fa-solid fa-shield-halved" style="color:#44BB44; font-size:1.4rem;"></i>
+            <div>
+                <div class="admin-stat-val" style="color:#44BB44;">Secure</div>
+                <div class="admin-stat-lbl">Access Level</div>
+            </div>
+        </div>
+        <div class="admin-stat-card">
+            <i class="fa-solid fa-key" style="color:#FFD700; font-size:1.4rem;"></i>
+            <div>
+                <div class="admin-stat-val" style="color:#FFD700;">Hashed</div>
+                <div class="admin-stat-lbl">Password Storage</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credential change form -->
+    <div class="admin-form-card">
+
+        <div class="admin-form-header">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="admin-form-icon">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <div>
+                    <div style="color:var(--gold-primary); font-weight:700; font-size:0.97rem;">Update Credentials</div>
+                    <div style="color:var(--text-muted); font-size:0.74rem;">Change your login username and password</div>
+                </div>
+            </div>
+            <div class="admin-lock-indicator">
+                <i class="fa-solid fa-lock" style="color:var(--gold-primary);"></i>
+                <span>Encrypted</span>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.change_password') }}"
+              data-log-label="/admin/change_password" class="admin-form-body">
+
+            <div class="admin-field-row">
+                <div class="admin-field">
+                    <label class="admin-label">
+                        <i class="fa-solid fa-lock-open fa-xs"></i> Current Password
+                    </label>
+                    <div class="admin-input-wrap">
+                        <i class="fa-solid fa-key admin-input-icon"></i>
+                        <input type="password" name="old_password" required
+                               placeholder="Enter current password"
+                               class="admin-input">
+                        <button type="button" class="admin-eye-btn" onclick="togglePwd(this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-divider">
+                <span><i class="fa-solid fa-arrow-down"></i> New Credentials</span>
+            </div>
+
+            <div class="admin-field-row admin-field-row-2">
+                <div class="admin-field">
+                    <label class="admin-label">
+                        <i class="fa-solid fa-user fa-xs"></i> New Username
+                    </label>
+                    <div class="admin-input-wrap">
+                        <i class="fa-solid fa-user admin-input-icon"></i>
+                        <input type="text" name="new_username" value="{{ session.username }}" required
+                               placeholder="Enter new username"
+                               class="admin-input">
+                    </div>
+                </div>
+
+                <div class="admin-field">
+                    <label class="admin-label">
+                        <i class="fa-solid fa-lock fa-xs"></i> New Password
+                    </label>
+                    <div class="admin-input-wrap">
+                        <i class="fa-solid fa-lock admin-input-icon"></i>
+                        <input type="password" name="new_password" required
+                               placeholder="Enter new password"
+                               class="admin-input" id="newPwdInput">
+                        <button type="button" class="admin-eye-btn" onclick="togglePwd(this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-field">
+                    <label class="admin-label">
+                        <i class="fa-solid fa-check-double fa-xs"></i> Confirm Password
+                    </label>
+                    <div class="admin-input-wrap">
+                        <i class="fa-solid fa-shield-halved admin-input-icon"></i>
+                        <input type="password" name="confirm_password" required
+                               placeholder="Confirm new password"
+                               class="admin-input" id="confirmPwdInput">
+                        <button type="button" class="admin-eye-btn" onclick="togglePwd(this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="admin-match-hint" id="pwdMatchHint"></div>
+                </div>
+            </div>
+
+            <!-- Password strength -->
+            <div class="admin-strength-row" id="pwdStrengthRow" style="display:none;">
+                <span class="admin-strength-lbl">Strength:</span>
+                <div class="admin-strength-bar">
+                    <div class="admin-strength-fill" id="pwdStrengthFill"></div>
+                </div>
+                <span class="admin-strength-txt" id="pwdStrengthTxt"></span>
+            </div>
+
+            <button type="submit" class="admin-submit-btn"
+                    onclick="logEvent('edit', 'Admin: Update credentials submitted')">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Update Credentials
+            </button>
+
+        </form>
+    </div>
+
+    <!-- Warning notice -->
+    <div class="admin-warning-card">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#FFAA00; font-size:1.1rem; flex-shrink:0;"></i>
+        <div>
+            <div style="color:#FFAA00; font-weight:600; font-size:0.83rem; margin-bottom:3px;">Security Notice</div>
+            <div style="color:var(--text-muted); font-size:0.77rem; line-height:1.6;">
+                Credentials are stored as a <strong style="color:rgba(255,215,0,0.7);">bcrypt hash</strong> in the local SQLite database.
+                Use this panel only in an isolated lab environment.
+                Never expose this interface on public networks.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+/* ── Admin page layout ── */
+.admin-page-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 10px 0 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.admin-page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 28px;
+    background: rgba(20,20,30,0.85);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 14px;
+    margin-bottom: 18px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+}
+
+.admin-header-icon {
+    width: 52px; height: 52px;
+    border-radius: 13px;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; color: var(--gold-primary);
+    box-shadow: 0 0 20px rgba(255,215,0,0.15);
+    flex-shrink: 0;
+}
+
+.admin-header-title {
+    color: var(--gold-primary);
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.admin-header-sub {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-top: 2px;
+}
+
+.admin-status-badge {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 14px;
+    background: rgba(68,187,68,0.1);
+    border: 1px solid rgba(68,187,68,0.3);
+    border-radius: 20px;
+    color: #66EE66;
+    font-size: 0.78rem; font-weight: 600;
+}
+
+.admin-status-dot {
+    width: 8px; height: 8px;
+    background: #44BB44;
+    border-radius: 50%;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Stats row */
+.admin-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.admin-stat-card {
+    display: flex; align-items: center; gap: 13px;
+    padding: 16px 18px;
+    background: rgba(20,20,30,0.85);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 10px;
+    backdrop-filter: blur(12px);
+    transition: all 0.2s;
+}
+
+.admin-stat-card:hover {
+    border-color: rgba(212,175,55,0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.admin-stat-val {
+    font-size: 0.97rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.admin-stat-lbl {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    margin-top: 1px;
+}
+
+/* Form card */
+.admin-form-card {
+    background: rgba(20,20,30,0.88);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 14px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.admin-form-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(212,175,55,0.15);
+    background: rgba(255,215,0,0.03);
+}
+
+.admin-form-icon {
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    background: rgba(255,215,0,0.12);
+    border: 1px solid rgba(255,215,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold-primary); font-size: 1rem;
+}
+
+.admin-lock-indicator {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    background: rgba(212,175,55,0.06);
+    border: 1px solid rgba(212,175,55,0.15);
+    border-radius: 20px;
+}
+
+.admin-form-body {
+    padding: 24px;
+}
+
+.admin-field-row { margin-bottom: 16px; }
+.admin-field-row-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.admin-field { display: flex; flex-direction: column; gap: 6px; }
+
+.admin-label {
+    color: var(--gold-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: flex; align-items: center; gap: 5px;
+}
+
+.admin-input-wrap {
+    position: relative;
+    display: flex; align-items: center;
+}
+
+.admin-input-icon {
+    position: absolute; left: 14px;
+    color: rgba(212,175,55,0.5);
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+.admin-input {
+    width: 100%;
+    background: rgba(10,10,20,0.8);
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 40px;
+    padding: 11px 44px 11px 38px;
+    color: #fff;
+    font-size: 13.5px;
+    font-family: inherit;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.admin-input:focus {
+    border-color: var(--gold-primary);
+    box-shadow: 0 0 0 3px rgba(255,215,0,0.12);
+}
+
+.admin-eye-btn {
+    position: absolute; right: 14px;
+    background: none; border: none;
+    color: rgba(212,175,55,0.45);
+    cursor: pointer; font-size: 0.82rem;
+    transition: color 0.15s;
+    padding: 0;
+}
+.admin-eye-btn:hover { color: var(--gold-primary); }
+
+.admin-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 18px 0 14px;
+    color: rgba(212,175,55,0.45);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.admin-divider::before,
+.admin-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(212,175,55,0.15);
+}
+
+.admin-match-hint {
+    font-size: 0.71rem;
+    min-height: 14px;
+    padding-left: 12px;
+    margin-top: 2px;
+}
+
+.admin-strength-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+}
+.admin-strength-lbl { color: var(--text-muted); font-size: 0.73rem; white-space: nowrap; }
+.admin-strength-bar {
+    flex: 1; height: 5px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 3px; overflow: hidden;
+}
+.admin-strength-fill {
+    height: 100%; width: 0%;
+    border-radius: 3px;
+    transition: width 0.3s, background 0.3s;
+}
+.admin-strength-txt { font-size: 0.73rem; min-width: 50px; font-weight: 600; }
+
+.admin-submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #FFD700, #B8860B);
+    color: #000;
+    font-weight: 700;
+    border: none;
+    border-radius: 40px;
+    padding: 13px;
+    font-size: 0.97rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 0.5px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 8px;
+}
+.admin-submit-btn:hover {
+    transform: scale(1.015);
+    box-shadow: 0 0 28px rgba(255,215,0,0.38);
+}
+
+/* Warning card */
+.admin-warning-card {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255,170,0,0.06);
+    border: 1px solid rgba(255,170,0,0.25);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+@keyframes pulse-dot {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.5; transform:scale(1.4); }
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Admin particles
+    initParticles('admin-particles', {
+        count: 30,
+        speed: 0.20,
+        dotRadius: 1.4,
+        maxDist: 100,
+        dotOpacity: 0.35,
+        lineOpacity: 0.10
+    });
+
+    // Live clock
+    function updateClock() {
+        const el = document.getElementById('adminClock');
+        if (el) el.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Toggle password visibility
+    function togglePwd(btn) {
+        const wrap  = btn.closest('.admin-input-wrap');
+        const input = wrap.querySelector('.admin-input');
+        const icon  = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fa-solid fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fa-solid fa-eye';
+        }
+    }
+
+    // Password strength + match
+    const newPwd     = document.getElementById('newPwdInput');
+    const confirmPwd = document.getElementById('confirmPwdInput');
+    const matchHint  = document.getElementById('pwdMatchHint');
+    const strengthRow  = document.getElementById('pwdStrengthRow');
+    const strengthFill = document.getElementById('pwdStrengthFill');
+    const strengthTxt  = document.getElementById('pwdStrengthTxt');
+
+    function checkStrength(val) {
+        let score = 0;
+        if (val.length >= 8)  score++;
+        if (val.length >= 12) score++;
+        if (/[A-Z]/.test(val)) score++;
+        if (/[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+        return score;
+    }
+
+    if (newPwd) {
+        newPwd.addEventListener('input', () => {
+            const v = newPwd.value;
+            if (!v) { strengthRow.style.display = 'none'; return; }
+            strengthRow.style.display = 'flex';
+            const sc = checkStrength(v);
+            const pct = Math.min(100, sc * 20);
+            strengthFill.style.width = pct + '%';
+            if (sc <= 1) { strengthFill.style.background = '#FF4444'; strengthTxt.textContent = 'Weak'; strengthTxt.style.color = '#FF4444'; }
+            else if (sc <= 2) { strengthFill.style.background = '#FFAA00'; strengthTxt.textContent = 'Fair'; strengthTxt.style.color = '#FFAA00'; }
+            else if (sc <= 3) { strengthFill.style.background = '#FFDD44'; strengthTxt.textContent = 'Good'; strengthTxt.style.color = '#FFDD44'; }
+            else if (sc <= 4) { strengthFill.style.background = '#44BB44'; strengthTxt.textContent = 'Strong'; strengthTxt.style.color = '#44BB44'; }
+            else { strengthFill.style.background = '#44AAFF'; strengthTxt.textContent = 'Excellent'; strengthTxt.style.color = '#44AAFF'; }
+            checkMatch();
+        });
+    }
+
+    function checkMatch() {
+        if (!confirmPwd || !confirmPwd.value) { matchHint.textContent = ''; return; }
+        if (newPwd.value === confirmPwd.value) {
+            matchHint.textContent = '✓ Passwords match';
+            matchHint.style.color = '#44BB44';
+        } else {
+            matchHint.textContent = '✗ Passwords do not match';
+            matchHint.style.color = '#FF4444';
+        }
+    }
+    if (confirmPwd) confirmPwd.addEventListener('input', checkMatch);
+
+    logEvent('nav', 'Admin panel opened');
+</script>
+{% endblock %}

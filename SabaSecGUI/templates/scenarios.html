@@ -1,0 +1,611 @@
+<!-- templates/scenarios.html – Scenario 1: ARP Spoofing + HTTP MITM -->
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ══════════════ ARP SPOOFING CARD ══════════════ -->
+<div class="card" style="border-color: rgba(255,170,68,0.5);">
+
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+        <i class="fa-solid fa-wifi" style="color:#FFAA44; font-size:1.4rem;"></i>
+        <h2 style="margin:0; color:#FFAA44;">Scenario 1 — ARP Spoofing Attack</h2>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">
+        Position your machine between the victim and the gateway by poisoning their ARP caches.
+        All traffic will be routed through your machine for analysis.
+    </p>
+
+    <!-- Educational steps -->
+    <div class="info-text" style="margin-bottom:16px;">
+        <strong style="color:#FFAA44;"><i class="fa-solid fa-graduation-cap fa-xs"></i> How ARP Spoofing works:</strong>
+        <div class="steps-grid" style="margin-top:12px;">
+            <div class="step-card">
+                <div class="step-num" style="background:#FFAA44;">1</div>
+                <div class="step-icon">🔍</div>
+                <div class="step-title">Discover Devices</div>
+                <div class="step-desc">Scan the network to find victim and gateway IP/MAC addresses</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num" style="background:#FFAA44;">2</div>
+                <div class="step-icon">🎭</div>
+                <div class="step-title">Poison ARP Cache</div>
+                <div class="step-desc">Send forged ARP replies so victim thinks attacker is the gateway — and vice versa</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num" style="background:#FFAA44;">3</div>
+                <div class="step-icon">🔀</div>
+                <div class="step-title">Intercept Traffic</div>
+                <div class="step-desc">All victim traffic now flows through your machine before reaching the gateway</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num" style="background:#FFAA44;">4</div>
+                <div class="step-icon">🛑</div>
+                <div class="step-title">Stop & Restore</div>
+                <div class="step-desc">Stopping the attack sends corrected ARP replies to restore original ARP tables</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Fields -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 0.5fr; gap:14px; flex-wrap:wrap; margin-bottom:12px;">
+
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-skull-crossbones fa-xs"></i> Victim IP
+                <span class="help-icon" data-tooltip="The target device's IP address — its traffic will be intercepted. Must be on the same LAN. Use Scan Network to discover devices.">?</span>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <select id="victim-select" style="flex:1; border-radius:4px;"
+                        data-tooltip="Select victim from scanned devices"
+                        onchange="if(this.value) document.getElementById('arp-victim').value=this.value">
+                    <option value="">— Select —</option>
+                </select>
+                <input type="text" id="arp-victim" placeholder="192.168.1.x" style="flex:1;"
+                       data-tooltip="Type victim IP manually or select from the scan dropdown above">
+            </div>
+        </div>
+
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-route fa-xs"></i> Gateway IP
+                <span class="help-icon" data-tooltip="The router/default gateway IP — usually 192.168.1.1. The attacker will impersonate this to the victim. Use Scan Network to discover it.">?</span>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <select id="gateway-select" style="flex:1; border-radius:4px;"
+                        data-tooltip="Select gateway from scanned devices"
+                        onchange="if(this.value) document.getElementById('arp-gateway').value=this.value">
+                    <option value="">— Select —</option>
+                </select>
+                <input type="text" id="arp-gateway" placeholder="192.168.1.1" style="flex:1;"
+                       data-tooltip="Type gateway IP manually or select from the scan dropdown above">
+            </div>
+        </div>
+
+        <div>
+            <div class="field-label">
+                <i class="fa-solid fa-network-wired fa-xs"></i> Interface
+                <span class="help-icon" data-tooltip="Network interface connected to the target LAN. Run 'ip link' in terminal to see available interfaces. Common: eth0, wlan0, ens33.">?</span>
+            </div>
+            <input type="text" id="arp-interface" value="eth0" style="width:100%;"
+                   data-tooltip="Must be on the same network segment as victim and gateway">
+        </div>
+
+    </div>
+
+    <!-- Buttons -->
+    <div class="control-group" style="gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-warning" onclick="scanNetwork()"
+                data-tooltip="Discover all devices on the LAN using ARP broadcast — requires root privileges">
+            <i class="fa-solid fa-radar fa-xs"></i> Scan Network
+        </button>
+        <button class="btn" style="background:#FFAA44; color:#000; font-weight:700;" onclick="startArpSpoof()"
+                data-tooltip="Begin ARP poisoning — sends forged ARP packets every 2 seconds to both victim and gateway">
+            <i class="fa-solid fa-play fa-xs"></i> Start ARP Spoofing
+        </button>
+        <button class="btn btn-danger" onclick="stopArpSpoof()"
+                data-tooltip="Stop ARP spoofing and restore the original ARP tables on both devices">
+            <i class="fa-solid fa-stop fa-xs"></i> Stop
+        </button>
+        <button class="btn btn-secondary" onclick="checkArpStatus()"
+                data-tooltip="Check if ARP spoofing is currently active">
+            <i class="fa-solid fa-rotate fa-xs"></i> Status
+        </button>
+    </div>
+
+    <div id="arp-status" class="status-box status-inactive" style="margin-top:12px;">
+        <i class="fa-solid fa-pause-circle fa-xs"></i> ARP spoofing inactive
+    </div>
+
+    <!-- Scan results -->
+    <div id="scan-results-arp" style="margin-top:14px; display:none;">
+        <div style="color:var(--gold-secondary); font-size:0.82rem; font-weight:600; margin-bottom:6px;">
+            <i class="fa-solid fa-list fa-xs"></i> Discovered devices — select victim and gateway from dropdowns above
+        </div>
+        <div id="device-list-arp" class="table-wrapper" style="max-height:200px; overflow-y:auto;"></div>
+    </div>
+
+</div>
+
+<!-- ══════════════ HTTP INTERCEPTION CARD ══════════════ -->
+<div class="card" style="border-color: rgba(170,68,255,0.4);">
+
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+        <i class="fa-solid fa-code-branch" style="color:#CC88FF; font-size:1.4rem;"></i>
+        <h2 style="margin:0; color:#CC88FF;">HTTP Request Interception (MITM)</h2>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">
+        Redirect HTTP traffic (port 80) through a local proxy to inspect, modify, and forward requests in real-time.
+        <strong style="color:#FFAA44;">Requires ARP spoofing to be active first.</strong>
+    </p>
+
+    <div class="info-text" style="margin-bottom:14px; border-left-color:#CC88FF;">
+        <strong style="color:#CC88FF;"><i class="fa-solid fa-circle-info fa-xs"></i> Workflow:</strong>
+        Start HTTP interception → victim browses HTTP site → request appears below →
+        read/modify payload → click <em>Send Modified</em> to forward to real server.
+    </div>
+
+    <!-- Buttons -->
+    <div class="control-group" style="gap:8px; flex-wrap:wrap;">
+        <button class="btn" style="background:#CC88FF; color:#000; font-weight:700;" onclick="startHttpIntercept()"
+                data-tooltip="Set up iptables rule to redirect port 80 traffic to local proxy. Requires active ARP spoofing.">
+            <i class="fa-solid fa-record-vinyl fa-xs"></i> Start Interception
+        </button>
+        <button class="btn btn-danger" onclick="stopHttpIntercept()"
+                data-tooltip="Remove iptables redirect rule and stop the local proxy">
+            <i class="fa-solid fa-stop fa-xs"></i> Stop
+        </button>
+        <button class="btn btn-secondary" onclick="checkHttpStatus()"
+                data-tooltip="Check if HTTP interception proxy is currently running">
+            <i class="fa-solid fa-rotate fa-xs"></i> Status
+        </button>
+        <button class="btn btn-secondary" onclick="clearIntercepted()"
+                data-tooltip="Delete all queued intercepted requests and reset the buffer">
+            <i class="fa-solid fa-trash fa-xs"></i> Clear Queue
+        </button>
+    </div>
+
+    <div id="http-status" class="status-box status-inactive" style="margin-top:12px;">
+        <i class="fa-solid fa-pause-circle fa-xs"></i> HTTP interception inactive
+    </div>
+
+    <!-- Intercepted Request Card -->
+    <div id="http-request-card" class="intercept-card" style="display:none;">
+        <h3>
+            <i class="fa-solid fa-envelope-open-text"></i>
+            Intercepted HTTP Request
+            <span style="font-size:11px; color:var(--text-muted); font-weight:400;">— modify payload and forward or drop</span>
+        </h3>
+
+        <div class="meta-grid">
+            <div class="meta-item">
+                <span class="meta-key"><i class="fa-solid fa-user fa-xs"></i> Client IP</span>
+                <span class="meta-val" id="http-client-ip">—</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-key"><i class="fa-solid fa-server fa-xs"></i> Host</span>
+                <span class="meta-val" id="http-host">—</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-key"><i class="fa-solid fa-code fa-xs"></i> Method</span>
+                <span class="meta-val" id="http-method">—</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-key"><i class="fa-solid fa-link fa-xs"></i> Path</span>
+                <span class="meta-val" id="http-path">—</span>
+            </div>
+        </div>
+
+        <div class="field-label" style="margin-bottom:6px;">
+            <i class="fa-solid fa-file-code fa-xs"></i> Request Payload
+            <span class="help-icon" data-tooltip="The raw HTTP request payload. You can edit this content before forwarding it to the real server — this simulates a MITM modification attack.">?</span>
+        </div>
+        <textarea id="http-payload" rows="10" style="width:100%; font-family:'JetBrains Mono',monospace; font-size:12px; border-radius:6px; resize:vertical;"
+                  data-tooltip="Edit the request payload here before forwarding to the server"></textarea>
+
+        <div class="control-group" style="margin-top:12px; gap:8px;">
+            <button class="btn" id="btn-send-mod" style="background:#CC88FF; color:#000; font-weight:700;" onclick="sendModifiedHttp()"
+                    data-tooltip="Forward the (possibly modified) payload to the real server — victim won't notice">
+                <i class="fa-solid fa-paper-plane fa-xs"></i> Send Modified
+            </button>
+            <button class="btn" id="btn-resend-orig" style="background:#44BB44; color:#000;" onclick="resendOriginalHttp()"
+                    data-tooltip="Forward the original unmodified request to the real server">
+                <i class="fa-solid fa-rotate-right fa-xs"></i> Resend Original
+            </button>
+            <button class="btn btn-danger" id="btn-drop" onclick="dropHttp()"
+                    data-tooltip="Drop this request — victim will receive a connection error">
+                <i class="fa-solid fa-ban fa-xs"></i> Drop Request
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ══════════ Utility ══════════
+function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════ Network Scan ══════════
+let devicesList = [];
+
+function scanNetwork() {
+    const iface = document.getElementById('arp-interface').value.trim() || 'eth0';
+    showInfo('Scanning network on ' + iface + '...');
+
+    fetch('/scenarios/scan_network', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interface: iface })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            devicesList = data.devices || [];
+            const vSel = document.getElementById('victim-select');
+            const gSel = document.getElementById('gateway-select');
+            const addOpt = (sel, d) => {
+                const o = new Option(`${d.ip}  (${d.mac})`, d.ip);
+                sel.appendChild(o);
+            };
+
+            vSel.innerHTML = '<option value="">— Select victim —</option>';
+            gSel.innerHTML = '<option value="">— Select gateway —</option>';
+            devicesList.forEach(d => { addOpt(vSel, d); addOpt(gSel, d); });
+
+            // Show list
+            const listDiv = document.getElementById('device-list-arp');
+            listDiv.innerHTML = devicesList.map(d => `
+                <div class="device-item">
+                    <i class="fa-solid fa-desktop fa-xs" style="color:var(--gold-dark);"></i>
+                    <strong style="color:var(--text-white);">${escapeHtml(d.ip)}</strong>
+                    <span style="color:var(--text-muted); font-size:11px;">${escapeHtml(d.mac || '—')}</span>
+                </div>`).join('');
+            document.getElementById('scan-results-arp').style.display = 'block';
+
+            showSuccess(`Found ${devicesList.length} device(s) — select victim and gateway from dropdowns`);
+        } else {
+            showError('Scan failed: ' + (data.message || 'Unknown error — root required'));
+        }
+    })
+    .catch(err => showError('Scan error: ' + err.message));
+}
+
+// ══════════ ARP Spoofing ══════════
+function startArpSpoof() {
+    const victim  = document.getElementById('arp-victim').value.trim();
+    const gateway = document.getElementById('arp-gateway').value.trim();
+    const iface   = document.getElementById('arp-interface').value.trim() || 'eth0';
+
+    if (!victim || !gateway) {
+        showWarning('Please enter both Victim IP and Gateway IP before starting');
+        return;
+    }
+    if (victim === gateway) {
+        showWarning('Victim and Gateway cannot be the same IP address');
+        return;
+    }
+
+    showInfo(`Starting ARP spoofing: ${victim} ↔ ${gateway} on ${iface}...`);
+
+    fetch('/scenarios/start_arp_spoof', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ victim_ip: victim, gateway_ip: gateway, interface: iface })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSuccess('ARP spoofing started — victim traffic is now routed through your machine');
+            setArpStatus(true, victim, gateway);
+        } else {
+            showError('ARP spoofing failed: ' + (data.message || 'Check root privileges'));
+        }
+    })
+    .catch(err => showError('ARP spoof start error: ' + err.message));
+}
+
+function stopArpSpoof() {
+    fetch('/scenarios/stop_arp_spoof', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showWarning('ARP spoofing stopped — ARP tables restored');
+        } else {
+            showError('Stop failed: ' + (data.message || 'Unknown error'));
+        }
+        setArpStatus(false);
+    })
+    .catch(err => showError('Stop error: ' + err.message));
+}
+
+function checkArpStatus() {
+    fetch('/scenarios/arp_status')
+    .then(res => res.json())
+    .then(data => {
+        setArpStatus(data.active, data.victim, data.gateway);
+        if (data.active) {
+            showInfo(`ARP spoofing active — victim: ${data.victim}, gateway: ${data.gateway}`);
+        } else {
+            showInfo('ARP spoofing is currently inactive');
+        }
+    })
+    .catch(() => showError('Could not reach ARP status endpoint'));
+}
+
+function setArpStatus(active, victim = '', gateway = '') {
+    const box = document.getElementById('arp-status');
+    if (active) {
+        box.className = 'status-box status-active';
+        box.innerHTML = `<i class="fa-solid fa-circle-dot fa-xs"></i> ARP spoofing ACTIVE — victim: <strong>${escapeHtml(victim)}</strong> → gateway: <strong>${escapeHtml(gateway)}</strong>`;
+    } else {
+        box.className = 'status-box status-inactive';
+        box.innerHTML = '<i class="fa-solid fa-pause-circle fa-xs"></i> ARP spoofing inactive';
+    }
+}
+
+// ══════════ HTTP Interception ══════════
+let httpPollingInterval = null;
+let httpActive = false;
+let currentRequestId   = null;
+let currentRequestData = null;
+let isSending = false; // prevent concurrent sends
+
+function startHttpIntercept() {
+    fetch('/scenarios/start_http_intercept', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            httpActive = true;
+            setHttpStatus(true);
+            showSuccess('HTTP interception started — waiting for victim requests...');
+            startHttpPolling();
+        } else {
+            showError('Failed to start interception: ' + (data.message || 'Check iptables / root'));
+        }
+    })
+    .catch(err => showError('Start error: ' + err.message));
+}
+
+function stopHttpIntercept() {
+    fetch('/scenarios/stop_http_intercept', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        httpActive = false;
+        stopHttpPolling();
+        setHttpStatus(false);
+        document.getElementById('http-request-card').style.display = 'none';
+        currentRequestId = null; currentRequestData = null;
+        showWarning('HTTP interception stopped — iptables rules removed');
+    })
+    .catch(err => showError('Stop error: ' + err.message));
+}
+
+function checkHttpStatus() {
+    fetch('/scenarios/http_intercept_status')
+    .then(res => res.json())
+    .then(data => {
+        httpActive = data.active;
+        setHttpStatus(data.active);
+        if (data.active) { startHttpPolling(); showInfo('HTTP interception is active'); }
+        else showInfo('HTTP interception is inactive');
+    })
+    .catch(() => showError('Could not reach HTTP status endpoint'));
+}
+
+function setHttpStatus(active) {
+    const box = document.getElementById('http-status');
+    if (active) {
+        box.className = 'status-box status-active';
+        box.innerHTML = '<i class="fa-solid fa-circle-dot fa-xs"></i> HTTP interception ACTIVE — waiting for victim requests';
+    } else {
+        box.className = 'status-box status-inactive';
+        box.innerHTML = '<i class="fa-solid fa-pause-circle fa-xs"></i> HTTP interception inactive';
+    }
+}
+
+function startHttpPolling() {
+    if (httpPollingInterval) return;
+    httpPollingInterval = setInterval(() => {
+        if (!httpActive || isSending) return; // skip if we are currently processing a request
+        fetch('/scenarios/get_http_request')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success' && data.request) {
+                const req = data.request;
+                // Only update if it's a new request (different ID)
+                if (req.id !== currentRequestId) {
+                    currentRequestId   = req.id;
+                    currentRequestData = req.data;
+                    document.getElementById('http-client-ip').textContent = req.src_ip || '—';
+                    document.getElementById('http-host').textContent = req.dst_ip || '—';
+                    document.getElementById('http-method').textContent = req.method || '—';
+                    document.getElementById('http-path').textContent = req.path || '—';
+                    document.getElementById('http-payload').value = req.data || '';
+                    const card = document.getElementById('http-request-card');
+                    if (card.style.display === 'none') {
+                        card.style.display = 'block';
+                        showInfo('New HTTP request intercepted from ' + (req.src_ip || 'unknown') + ' — modify and forward');
+                    }
+                }
+            } else {
+                // No request pending
+                if (document.getElementById('http-request-card').style.display !== 'none') {
+                    document.getElementById('http-request-card').style.display = 'none';
+                    currentRequestId = null; currentRequestData = null;
+                }
+            }
+        });
+    }, 2000);
+}
+
+function stopHttpPolling() {
+    if (httpPollingInterval) { clearInterval(httpPollingInterval); httpPollingInterval = null; }
+}
+
+// Helper to disable/enable buttons during send
+function setButtonsEnabled(enabled) {
+    const btns = ['btn-send-mod', 'btn-resend-orig', 'btn-drop'];
+    btns.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = !enabled;
+    });
+}
+
+function sendModifiedHttp() {
+    if (isSending) return;
+    if (!currentRequestId) { showWarning('No intercepted request to forward'); return; }
+
+    isSending = true;
+    setButtonsEnabled(false);
+
+    const payload = document.getElementById('http-payload').value;
+
+    // Optimistically hide the card to avoid showing same request again while waiting
+    document.getElementById('http-request-card').style.display = 'none';
+    const oldId = currentRequestId; // save ID to detect if same request reappears on error
+
+    fetch('/scenarios/release_request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentRequestId, payload })
+    })
+    .then(res => res.json())
+    .then(data => {
+        isSending = false;
+        setButtonsEnabled(true);
+        if (data.status === 'success') {
+            showSuccess('Modified request forwarded to the real server');
+            // Request removed from server, so clear local tracking
+            currentRequestId = null;
+            currentRequestData = null;
+            // Card already hidden, no need to show again
+        } else {
+            showError('Forward failed: ' + (data.message || 'Unknown error'));
+            // If the request still exists in server (it does), show the card again
+            // But we need to refetch to ensure we have the latest data (maybe not changed)
+            // For simplicity, just show the card again and restore payload from currentRequestData?
+            if (currentRequestId === oldId) {
+                // Restore card with the same request data
+                const card = document.getElementById('http-request-card');
+                card.style.display = 'block';
+                // Re-fill fields (they are still in memory)
+                document.getElementById('http-payload').value = currentRequestData;
+            }
+        }
+    })
+    .catch(err => {
+        isSending = false;
+        setButtonsEnabled(true);
+        showError('Send error: ' + err.message);
+        // Restore card if needed
+        if (currentRequestId) {
+            document.getElementById('http-request-card').style.display = 'block';
+            document.getElementById('http-payload').value = currentRequestData;
+        }
+    });
+}
+
+function resendOriginalHttp() {
+    if (isSending) return;
+    if (!currentRequestId || !currentRequestData) { showWarning('Original request data not available'); return; }
+
+    isSending = true;
+    setButtonsEnabled(false);
+    document.getElementById('http-request-card').style.display = 'none';
+    const oldId = currentRequestId;
+
+    fetch('/scenarios/release_request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentRequestId, payload: currentRequestData })
+    })
+    .then(res => res.json())
+    .then(data => {
+        isSending = false;
+        setButtonsEnabled(true);
+        if (data.status === 'success') {
+            showSuccess('Original request forwarded — victim connection restored');
+            currentRequestId = null;
+            currentRequestData = null;
+        } else {
+            showError('Resend failed: ' + (data.message || 'Unknown error'));
+            if (currentRequestId === oldId) {
+                document.getElementById('http-request-card').style.display = 'block';
+                document.getElementById('http-payload').value = currentRequestData;
+            }
+        }
+    })
+    .catch(err => {
+        isSending = false;
+        setButtonsEnabled(true);
+        showError('Resend error: ' + err.message);
+        if (currentRequestId) {
+            document.getElementById('http-request-card').style.display = 'block';
+            document.getElementById('http-payload').value = currentRequestData;
+        }
+    });
+}
+
+function dropHttp() {
+    if (isSending) return;
+    if (!currentRequestId) { showWarning('No request to drop'); return; }
+
+    confirmAction('Drop this HTTP request? The victim will receive a connection error.').then(ok => {
+        if (!ok) return;
+        isSending = true;
+        setButtonsEnabled(false);
+        document.getElementById('http-request-card').style.display = 'none';
+        const oldId = currentRequestId;
+
+        fetch('/scenarios/drop_http', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: currentRequestId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            isSending = false;
+            setButtonsEnabled(true);
+            if (data.status === 'success') {
+                showWarning('Request dropped — victim connection blocked');
+                currentRequestId = null;
+                currentRequestData = null;
+            } else {
+                showError('Drop failed: ' + (data.message || 'Unknown error'));
+                if (currentRequestId === oldId) {
+                    document.getElementById('http-request-card').style.display = 'block';
+                    document.getElementById('http-payload').value = currentRequestData;
+                }
+            }
+        })
+        .catch(err => {
+            isSending = false;
+            setButtonsEnabled(true);
+            showError('Drop error: ' + err.message);
+            if (currentRequestId) {
+                document.getElementById('http-request-card').style.display = 'block';
+                document.getElementById('http-payload').value = currentRequestData;
+            }
+        });
+    });
+}
+
+function clearIntercepted() {
+    fetch('/scenarios/clear_intercepted', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        showInfo('Intercepted request queue cleared');
+        document.getElementById('http-request-card').style.display = 'none';
+        currentRequestId = null; currentRequestData = null;
+    })
+    .catch(err => showError('Clear error: ' + err.message));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkArpStatus();
+    checkHttpStatus();
+});
+</script>
+
+{% endblock %}

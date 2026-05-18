@@ -1,0 +1,1336 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ═══════════════ EDUCATIONAL PAGE STYLES (static, no animations) ═══════════════ */
+.edu-hero {
+    background: linear-gradient(135deg, #0a0a0a 0%, #111 40%, #0d1a0d 100%);
+    border: 1px solid rgba(68,187,68,0.35);
+    border-radius: 14px;
+    padding: 36px 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+.edu-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(68,187,68,0.06) 0%, transparent 65%);
+}
+.edu-hero-icon {
+    font-size: 3.5rem;
+    color: #44BB44;
+    margin-bottom: 14px;
+    display: block;
+}
+.edu-hero h1 {
+    color: #44BB44;
+    font-size: 1.9rem;
+    margin: 0 0 6px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+.edu-hero .hero-subtitle-en {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin: 0 0 10px;
+}
+.edu-hero .hero-subtitle-ar {
+    color: rgba(68,187,68,0.8);
+    font-size: 1rem;
+    font-weight: 600;
+    direction: rtl;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+.edu-hero-tags {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+}
+.edu-tag {
+    background: rgba(68,187,68,0.12);
+    border: 1px solid rgba(68,187,68,0.35);
+    color: #44BB44;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* ── Lang toggle ── */
+.lang-toggle-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.lang-btn {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(68,187,68,0.3);
+    color: var(--text-muted);
+    border-radius: 20px;
+    padding: 6px 20px;
+    font-size: 0.83rem;
+    cursor: pointer;
+    transition: all .25s;
+}
+.lang-btn.active {
+    background: rgba(68,187,68,0.18);
+    border-color: #44BB44;
+    color: #44BB44;
+    font-weight: 700;
+}
+
+/* ── Section headings ── */
+.edu-section {
+    background: var(--card-bg, #111);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 12px;
+    padding: 24px 22px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+}
+.edu-section::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(68,187,68,0.6), transparent);
+}
+.section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+.section-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+.section-title-block h2 {
+    margin: 0 0 2px;
+    font-size: 1.15rem;
+    color: var(--text-white, #fff);
+    font-weight: 700;
+}
+.section-title-block .ar {
+    direction: rtl;
+    color: rgba(68,187,68,0.85);
+    font-size: 0.9rem;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    font-weight: 600;
+}
+
+/* ── Bilingual text ── */
+.bi-block {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+@media(max-width:640px){ .bi-block { grid-template-columns: 1fr; } }
+.bi-en {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.8;
+}
+.bi-en .lang-label { color: #44BB44; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+.bi-ar {
+    background: rgba(68,187,68,0.05);
+    border: 1px solid rgba(68,187,68,0.15);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: rgba(200,230,200,0.85);
+    font-size: 0.88rem;
+    line-height: 1.9;
+    direction: rtl;
+    text-align: right;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+.bi-ar .lang-label { color: #44BB44; font-size: 0.72rem; font-weight: 700; margin-bottom: 6px; display: block; }
+
+/* ── Attack Diagram ── */
+.attack-diagram {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(68,187,68,0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 14px 0;
+    overflow-x: auto;
+}
+.attack-diagram svg { display: block; margin: auto; }
+
+/* ── Steps grid ── */
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+.step-card {
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(68,187,68,0.2);
+    border-radius: 10px;
+    padding: 16px 14px;
+    text-align: center;
+    transition: border-color .25s, transform .25s;
+}
+.step-card:hover { border-color: #44BB44; transform: translateY(-3px); }
+.step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; font-weight: 800; color: #0a0a0a;
+    margin: 0 auto 10px;
+}
+.step-emoji { font-size: 1.6rem; margin-bottom: 8px; }
+.step-title-en { color: #fff; font-size: 0.83rem; font-weight: 700; margin-bottom: 4px; }
+.step-title-ar { color: rgba(68,187,68,0.8); font-size: 0.78rem; direction: rtl; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; margin-bottom: 6px; }
+.step-desc-en { color: var(--text-muted); font-size: 0.76rem; line-height: 1.6; }
+.step-desc-ar { color: rgba(200,220,200,0.7); font-size: 0.76rem; direction: rtl; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; line-height: 1.7; margin-top: 4px; }
+
+/* ── Protection cards ── */
+.protect-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+.protect-card {
+    background: rgba(0,50,0,0.2);
+    border: 1px solid rgba(68,187,68,0.25);
+    border-radius: 10px;
+    padding: 16px 14px;
+    transition: border-color .25s, background .25s;
+}
+.protect-card:hover { background: rgba(0,70,0,0.3); border-color: #44BB44; }
+.protect-icon { font-size: 1.6rem; margin-bottom: 10px; }
+.protect-title-en { color: #44BB44; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
+.protect-title-ar { color: rgba(100,200,100,0.8); font-size: 0.8rem; direction: rtl; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; margin-bottom: 8px; }
+.protect-desc { color: var(--text-muted); font-size: 0.78rem; line-height: 1.65; margin-bottom: 4px; }
+.protect-desc-ar { color: rgba(170,200,170,0.7); font-size: 0.76rem; direction: rtl; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; line-height: 1.7; }
+
+/* ── Protocol Table ── */
+.proto-table-wrap { overflow-x: auto; margin-top: 14px; }
+.proto-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+.proto-table th { background: rgba(68,187,68,0.1); color: #44BB44; padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(68,187,68,0.2); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.proto-table td { padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text-muted); vertical-align: top; }
+.proto-table tr:hover td { background: rgba(255,255,255,0.02); }
+.badge { display: inline-block; padding: 2px 9px; border-radius: 5px; font-size: 0.72rem; font-weight: 700; }
+.badge-http  { background: rgba(255,100,100,0.15); color: #FF6666; border: 1px solid rgba(255,100,100,0.3); }
+.badge-https { background: rgba(68,187,68,0.15);  color: #44BB44; border: 1px solid rgba(68,187,68,0.3); }
+.badge-smtp  { background: rgba(255,170,68,0.15); color: #FFAA44; border: 1px solid rgba(255,170,68,0.3); }
+.badge-smtps { background: rgba(68,187,68,0.15);  color: #44BB44; border: 1px solid rgba(68,187,68,0.3); }
+.badge-arp   { background: rgba(200,100,255,0.15);color: #CC88FF; border: 1px solid rgba(200,100,255,0.3); }
+.enc-yes { color: #44BB44; }
+.enc-no  { color: #FF4444; }
+
+/* ── Scenario visual ── */
+.scenario-visual {
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 14px 0;
+    overflow-x: auto;
+}
+.flow-nodes {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: nowrap;
+    min-width: 500px;
+}
+.flow-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.node-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    border: 2px solid;
+    position: relative;
+}
+.node-victim  { background: rgba(68,100,255,0.15); border-color: #4466FF; color: #4466FF; }
+.node-gateway { background: rgba(68,187,68,0.15);  border-color: #44BB44; color: #44BB44; }
+.node-attacker{ background: rgba(255,60,60,0.15);   border-color: #FF3C3C; color: #FF3C3C; }
+.node-server  { background: rgba(255,170,68,0.15);  border-color: #FFAA44; color: #FFAA44; }
+.node-label-en { color: #fff; font-size: 0.72rem; font-weight: 700; text-align: center; }
+.node-label-ar { color: rgba(68,187,68,0.8); font-size: 0.7rem; direction: rtl; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; text-align: center; }
+
+.flow-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 40px;
+}
+.arrow-line {
+    height: 2px;
+    width: 100%;
+    position: relative;
+    background: linear-gradient(90deg, #FF3C3C, #FF3C3C);
+}
+.arrow-line::after {
+    content: '▶';
+    position: absolute;
+    right: -6px;
+    top: -9px;
+    color: #FF3C3C;
+    font-size: 0.7rem;
+}
+.arrow-label-en { color: #FF3C3C; font-size: 0.66rem; font-weight: 700; text-align: center; margin-top: 4px; white-space: nowrap; }
+.arrow-label-ar { color: rgba(255,100,100,0.7); font-size: 0.64rem; direction: rtl; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; text-align: center; }
+
+.arrow-line.safe { background: linear-gradient(90deg, #44BB44, #44BB44); }
+.arrow-line.safe::after { color: #44BB44; }
+.arrow-label-en.safe { color: #44BB44; }
+
+/* ── ARP Diagram ── */
+.arp-diagram {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 14px;
+}
+@media(max-width:580px){ .arp-diagram { grid-template-columns: 1fr; } }
+.arp-box {
+    background: rgba(0,0,0,0.35);
+    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.arp-box-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.arp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 8px;
+    border-radius: 5px;
+    margin-bottom: 4px;
+    font-size: 0.78rem;
+    font-family: 'Courier New', monospace;
+}
+.arp-row.normal { background: rgba(68,187,68,0.08); color: #44BB44; }
+.arp-row.poisoned { background: rgba(255,60,60,0.1); color: #FF6666; }
+.arp-row.changed { background: rgba(255,170,0,0.1); color: #FFAA44; }
+.arp-badge { font-size: 0.65rem; padding: 1px 6px; border-radius: 3px; font-family: 'Inter', sans-serif; font-weight: 700; }
+.arp-badge.ok  { background: rgba(68,187,68,0.2); color: #44BB44; }
+.arp-badge.bad { background: rgba(255,60,60,0.2); color: #FF6666; }
+
+/* ── Warning banner ── */
+.warn-banner {
+    background: rgba(255,170,68,0.08);
+    border: 1px solid rgba(255,170,68,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #FFCC66;
+    font-size: 0.83rem;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 14px;
+}
+.warn-banner-text { flex: 1; }
+.warn-banner-ar { direction: rtl; text-align: right; margin-top: 4px; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 0.8rem; color: rgba(255,200,100,0.7); }
+
+/* ── Features grid ── */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+.feature-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,215,0,0.12);
+    border-radius: 10px;
+    padding: 16px 14px;
+    transition: border-color .25s, transform .25s;
+    text-decoration: none;
+    display: block;
+}
+.feature-card:hover { border-color: var(--gold-primary, #FFD700); transform: translateY(-3px); }
+.feature-card-icon { font-size: 1.4rem; margin-bottom: 8px; }
+.feature-card-title-en { color: #fff; font-weight: 700; font-size: 0.84rem; margin-bottom: 3px; }
+.feature-card-title-ar { color: rgba(255,215,0,0.7); font-size: 0.78rem; direction: rtl; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; margin-bottom: 7px; }
+.feature-card-desc { color: var(--text-muted); font-size: 0.76rem; line-height: 1.6; }
+.feature-card-link { color: var(--gold-primary, #FFD700); font-size: 0.72rem; font-weight: 700; margin-top: 8px; display: inline-block; }
+
+/* helper */
+.spill { padding:3px 7px;border-radius:4px;font-size:0.69rem;font-weight:700;font-family:'Courier New',monospace; }
+.spill-ok  { background:rgba(68,187,68,0.1);color:#44BB44; }
+.spill-bad { background:rgba(255,60,60,0.12);color:#FF6666; }
+.spill-warn{ background:rgba(255,170,68,0.1);color:#FFAA44; }
+.phase-pill { padding:4px 11px;border-radius:20px;font-size:0.71rem;font-weight:600;border:1px solid;transition:all .3s;cursor:default; }
+.phase-pill.idle    { background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.07);color:rgba(255,255,255,0.28); }
+.phase-pill.current { background:rgba(255,60,60,0.14);border-color:rgba(255,60,60,0.55);color:#FF9999; }
+.phase-pill.done    { background:rgba(68,187,68,0.09);border-color:rgba(68,187,68,0.28);color:#66CC66; }
+</style>
+
+<!-- ══════════════ HERO HEADER ══════════════ -->
+<div class="edu-hero">
+    <span class="edu-hero-icon"><i class="fa-solid fa-shield-halved"></i></span>
+    <h1>🎓 Cyber Learning Hub</h1>
+    <p class="hero-subtitle-en">Your interactive guide to understanding cybersecurity — attack scenarios, defenses, and more.</p>
+    <p class="hero-subtitle-ar">مركزك التفاعلي لفهم الأمن السيبراني — سيناريوهات الهجوم، والحماية، والمزيد.</p>
+    <div class="edu-hero-tags">
+        <span class="edu-tag">🇬🇧 English</span>
+        <span class="edu-tag">🇸🇦 عربي</span>
+        <span class="edu-tag">🔒 MITM</span>
+        <span class="edu-tag">🛡️ Defense</span>
+        <span class="edu-tag">🧪 Lab Only</span>
+    </div>
+</div>
+
+<!-- ══════════════ MITM DEMO VISUALIZER (with pause) ══════════════ -->
+<div class="edu-section" id="mitm-visualizer" style="border-color:rgba(255,60,60,0.3); padding:0; overflow:hidden; position:relative;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,60,60,0.2);background:rgba(10,0,0,0.5);">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,60,60,0.12);border:1px solid rgba(255,60,60,0.4);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🎭</div>
+            <div>
+                <div style="color:#fff;font-weight:800;font-size:1.05rem;letter-spacing:0.3px;">Attack Scenario Visualizer</div>
+                <div style="color:rgba(255,100,100,0.75);font-size:0.78rem;font-family:'Segoe UI',sans-serif;">عرض سيناريو الهجوم — شرح تعليمي وهمي</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div id="vis-badge" style="padding:4px 14px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(80,80,80,0.15);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);">⏸ خامل / Idle</div>
+            <button id="btn-demo" onclick="toggleDemo()" style="background:linear-gradient(135deg,#6B0000,#AA1100);border:1px solid rgba(255,60,60,0.45);color:#fff;border-radius:9px;padding:10px 22px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .25s;line-height:1.35;min-width:160px;">
+                🎭 عرض الهجوم<br><span style="font-size:0.68rem;opacity:0.75;">Attack Scenario Demo</span>
+            </button>
+            <button id="btn-pause" onclick="pauseDemo()" style="display:none;background:rgba(100,100,100,0.5);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:9px;padding:10px 16px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .25s;">
+                <i class="fa-solid fa-pause"></i> Pause
+            </button>
+        </div>
+    </div>
+
+    <div id="demo-banner" style="display:none;background:rgba(160,20,0,0.15);border-bottom:1px solid rgba(255,60,60,0.25);padding:8px 20px;text-align:center;">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#FF6666;"></i>
+        <span style="color:#FF8888;font-weight:700;font-size:0.82rem;"> هذا عرض تعليمي وهمي — بيانات مُحاكاة للشرح فقط، لا يوجد هجوم حقيقي &nbsp;|&nbsp; Educational DEMO only — simulated data, no real attack</span>
+    </div>
+
+    <div style="position:relative;background:#050a05;">
+        <canvas id="mitm-canvas" style="display:block;width:100%;height:440px;"></canvas>
+
+        <div id="phase-box" style="display:none;position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.88);border:1px solid rgba(255,60,60,0.4);border-radius:10px;padding:12px 22px;text-align:center;min-width:300px;max-width:88%;pointer-events:none;backdrop-filter:blur(6px);z-index:10;">
+            <div id="phase-en" style="color:#FF8888;font-weight:800;font-size:0.88rem;margin-bottom:3px;"></div>
+            <div id="phase-ar" style="color:rgba(255,160,160,0.82);font-size:0.81rem;font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;"></div>
+        </div>
+
+        <div id="arp-overlay" style="display:none;position:absolute;top:10px;left:12px;background:rgba(0,0,0,0.85);border:1px solid rgba(255,170,68,0.4);border-radius:9px;padding:10px 13px;min-width:218px;backdrop-filter:blur(5px);z-index:10;">
+            <div style="color:#FFAA44;font-size:0.67rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;border-bottom:1px solid rgba(255,170,68,0.2);padding-bottom:4px;">📋 ARP Cache — Victim</div>
+            <div id="arp-rows" style="font-family:'Courier New',monospace;font-size:0.67rem;display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+
+        <div id="idle-hint" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;gap:10px;">
+            <div style="font-size:2.8rem;opacity:0.12;">🎭</div>
+            <div style="color:rgba(255,255,255,0.15);font-size:0.85rem;font-weight:600;">اضغط "عرض الهجوم" لبدء الشرح التفاعلي</div>
+            <div style="color:rgba(255,255,255,0.1);font-size:0.78rem;">Press "Attack Scenario Demo" to start</div>
+        </div>
+    </div>
+
+    <div id="step-legend" style="display:none;padding:12px 20px;border-top:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.35);">
+        <div style="color:rgba(255,255,255,0.22);font-size:0.7rem;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">🎬 مراحل العرض — Demo Phases</div>
+        <div id="pills-row" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+    </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ═══ DEMO PHASES ═══ */
+const PHASES = [
+  { dur:4200,
+    en:'🟢 Phase 1 — Normal Network Traffic',
+    ar:'المرحلة 1 — حركة شبكية طبيعية — الضحية تتصل بالبوابة والخادم مباشرة',
+    arp:'normal', poisoned:false,
+    pkts:[
+      {f:'victim', t:'gateway',proto:'HTTP',col:'#44AAFF',lbl:'GET /index.html',lAr:'طلب HTTP عادي',spd:0.85},
+      {f:'gateway',t:'server', proto:'TCP', col:'#88CCFF',lbl:'Relay →',        lAr:'توجيه للخادم',spd:0.85,delay:380},
+      {f:'server', t:'gateway',proto:'200', col:'#66DDFF',lbl:'200 OK',          lAr:'استجابة ناجحة',spd:0.85,delay:750},
+      {f:'gateway',t:'victim', proto:'RSP', col:'#99CCFF',lbl:'Response ✓',      lAr:'الرد يصل للضحية',spd:0.85,delay:1100},
+    ]},
+  { dur:4600,
+    en:'⚠️ Phase 2 — ARP Spoof: Attacker Tells Victim "I am the Gateway"',
+    ar:'المرحلة 2 — المهاجم يرسل ARP مزيف للضحية: "أنا البوابة (192.168.1.1) — أرسل لي حركتك"',
+    arp:'normal', poisoned:false,
+    pkts:[
+      {f:'attacker',t:'victim',proto:'ARP',col:'#FF6600',
+       lbl:'REPLY: 192.168.1.1 is at EE:EE:EE:ATTACK 🔴',lAr:'تزوير هوية البوابة للضحية',spd:0.62},
+    ]},
+  { dur:4600,
+    en:'⚠️ Phase 3 — ARP Spoof: Attacker Tells Gateway "I am the Victim"',
+    ar:'المرحلة 3 — المهاجم يرسل ARP مزيف للبوابة: "أنا الضحية (192.168.1.100) — أرسل لي ردودها"',
+    arp:'poisoning', poisoned:false,
+    pkts:[
+      {f:'attacker',t:'gateway',proto:'ARP',col:'#FF8800',
+       lbl:'REPLY: 192.168.1.100 is at EE:EE:EE:ATTACK 🔴',lAr:'تزوير هوية الضحية للبوابة',spd:0.62},
+    ]},
+  { dur:4000,
+    en:'☠️ Phase 4 — ARP Cache Poisoned! Both Sides Now Route Through Attacker',
+    ar:'المرحلة 4 — جدول ARP مسموم! كلا الطرفين يُرسل حركته للمهاجم بدل الوجهة الحقيقية',
+    arp:'poisoned', poisoned:true, pkts:[]},
+  { dur:5500,
+    en:'🔀 Phase 5 — All Traffic Hijacked: Victim → Attacker → Gateway → Server',
+    ar:'المرحلة 5 — كل الحركة مُختطفة: الضحية → المهاجم → البوابة → الخادم — المهاجم في المنتصف',
+    arp:'poisoned', poisoned:true,
+    pkts:[
+      {f:'victim',   t:'attacker',proto:'HTTP',col:'#FF4444',lbl:'POST /login  user=admin&pass=Secret123',lAr:'بيانات الدخول — مُعترَضة!',spd:0.78},
+      {f:'attacker', t:'gateway', proto:'HTTP',col:'#FF7722',lbl:'Forward (reads all) →',lAr:'المهاجم يقرأ ويُمرّر',spd:0.78,delay:500},
+      {f:'gateway',  t:'server',  proto:'TCP', col:'#FFAA44',lbl:'Relay →',               lAr:'البوابة تحوّله للخادم',spd:0.78,delay:920},
+    ]},
+  { dur:5000,
+    en:'👁️ Phase 6 — Attacker Reads Credentials & Sensitive Data',
+    ar:'المرحلة 6 — المهاجم يقرأ ويسرق بيانات الدخول والمعلومات الحساسة من الحزم',
+    arp:'poisoned', poisoned:true,
+    pkts:[
+      {f:'victim',t:'attacker',proto:'SMTP',col:'#CC44FF',
+       lbl:'From: alice  Pass: pa$$w0rd — EXPOSED!',lAr:'إيميل مع كلمة المرور — مكشوف للمهاجم',spd:0.68,explode:true},
+    ]},
+  { dur:5200,
+    en:'✏️ Phase 7 — Attacker Modifies Data & Forwards Fake Packets to Server',
+    ar:'المرحلة 7 — المهاجم يعدّل البيانات ويرسلها للخادم — الخادم لا يعلم بالتعديل',
+    arp:'poisoned', poisoned:true,
+    pkts:[
+      {f:'attacker',t:'gateway',proto:'SMTP',col:'#FF44AA',
+       lbl:'[MODIFIED] From: attacker@evil.com',lAr:'بيانات معدّلة يُرسلها المهاجم',spd:0.72},
+      {f:'gateway', t:'server', proto:'TCP', col:'#FF8866',lbl:'Delivers modified data →',lAr:'الخادم يستقبل البيانات المزيفة',spd:0.72,delay:620},
+    ]},
+];
+
+const PILL_LABELS = [
+  '1. شبكة طبيعية','2. ARP للضحية','3. ARP للبوابة',
+  '4. جدول مسموم','5. اعتراض حركة','6. سرقة بيانات','7. إرسال معدّل'
+];
+
+/* ═══ CANVAS ═══ */
+const canvas = document.getElementById('mitm-canvas');
+const ctx    = canvas.getContext('2d');
+let W=0, H=0, dpr=window.devicePixelRatio||1;
+let running=false, animId=null, paused=false;
+let packets=[], sparks=[];
+let phase=0, phTimer=0, phSpawned=false, currentPoisoned=false;
+
+const ND = {
+  victim:   {rx:0.10,ry:0.48,icon:'💻',lbl:'Victim',  ar:'الضحية', col:'#4477FF'},
+  attacker: {rx:0.50,ry:0.18,icon:'👤',lbl:'Attacker',ar:'المهاجم',col:'#FF3C3C'},
+  gateway:  {rx:0.76,ry:0.48,icon:'🌐',lbl:'Gateway', ar:'البوابة',col:'#44BB44'},
+  server:   {rx:0.92,ry:0.70,icon:'🖥', lbl:'Server',  ar:'الخادم', col:'#FFAA44'},
+};
+let N={};
+
+function resolveNodes(){
+  Object.keys(ND).forEach(k=>{
+    const d=ND[k];
+    N[k]={...d,x:d.rx*W,y:d.ry*H,r:Math.min(W,H)*0.058};
+  });
+}
+
+function resize(){
+  const rect=canvas.parentElement.getBoundingClientRect();
+  W=rect.width; H=440;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  resolveNodes();
+}
+
+function drawGrid(){
+  ctx.save();
+  ctx.strokeStyle='rgba(68,187,68,0.04)';
+  ctx.lineWidth=1;
+  for(let x=0;x<W;x+=38){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=38){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.restore();
+}
+function drawRoutes(poisoned){
+  ctx.save();
+  ctx.setLineDash([7,5]);
+  ctx.strokeStyle=`rgba(68,187,68,${poisoned?0.07:0.2})`;
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(N.victim.x,N.victim.y);
+  ctx.lineTo(N.gateway.x,N.gateway.y);
+  ctx.lineTo(N.server.x,N.server.y);
+  ctx.stroke();
+  if(poisoned){
+    ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(255,50,50,0.3)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(N.victim.x,N.victim.y);
+    ctx.lineTo(N.attacker.x,N.attacker.y);
+    ctx.lineTo(N.gateway.x,N.gateway.y);
+    ctx.lineTo(N.server.x,N.server.y);
+    ctx.stroke();
+    ctx.font=`bold ${Math.max(9,H*0.021)}px monospace`;
+    ctx.fillStyle='#FF3C3C';
+    ctx.textAlign='center';
+    ctx.textBaseline='bottom';
+    ctx.fillText('⚠ M I T M', N.attacker.x, N.attacker.y-N.attacker.r-22);
+  }
+  ctx.restore();
+}
+function drawNodes(poisoned){
+  Object.keys(N).forEach(k=>{
+    const n=N[k];
+    const isAtk=k==='attacker';
+    ctx.save();
+    if(isAtk&&poisoned){
+      const pulse=0.5+0.5*Math.sin(Date.now()/500);
+      const gr=ctx.createRadialGradient(n.x,n.y,n.r,n.x,n.y,n.r+20+pulse*10);
+      gr.addColorStop(0,`rgba(255,60,60,${0.22+pulse*0.2})`);
+      gr.addColorStop(1,'rgba(255,60,60,0)');
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r+20+pulse*10,0,Math.PI*2);
+      ctx.fillStyle=gr; ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+    ctx.fillStyle=n.col+'22'; ctx.fill();
+    ctx.strokeStyle=(isAtk&&poisoned)?'#FF3C3C':n.col;
+    ctx.lineWidth=(isAtk&&poisoned)?2.5:1.5;
+    ctx.stroke();
+    ctx.font=`${n.r*0.92}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(n.icon,n.x,n.y);
+    ctx.font=`bold ${Math.max(10,H*0.026)}px Inter,sans-serif`;
+    ctx.fillStyle=n.col;
+    ctx.textBaseline='top';
+    ctx.fillText(n.lbl,n.x,n.y+n.r+5);
+    ctx.font=`${Math.max(9,H*0.021)}px Segoe UI,sans-serif`;
+    ctx.fillStyle=n.col+'88';
+    ctx.fillText(n.ar,n.x,n.y+n.r+20);
+    ctx.restore();
+  });
+}
+
+/* ═══ PACKET ═══ */
+class Pkt{
+  constructor(c){
+    const fn=N[c.f],tn=N[c.t];
+    this.sx=fn.x; this.sy=fn.y;
+    this.tx=tn.x; this.ty=tn.y;
+    this.x=fn.x;  this.y=fn.y;
+    this.prog=0; this.spd=(c.spd||0.85)*0.007;
+    this.col=c.col||'#44AAFF';
+    this.proto=(c.proto||'PKT').substring(0,5);
+    this.lbl=c.lbl||''; this.lAr=c.lAr||'';
+    this.explode=!!c.explode; this.exploded=false;
+    this.done=false; this.delay=c.delay||0; this.age=0;
+    this.r=Math.min(W,H)*0.022;
+  }
+  tick(dt){
+    this.age+=dt;
+    if(this.age<this.delay) return;
+    this.prog+=this.spd*(dt/16);
+    if(this.prog>=1){
+      if(this.explode&&!this.exploded){ this.exploded=true; doExplode(this.tx,this.ty,this.col); }
+      this.done=true;
+    }
+    const t=Math.min(1,this.prog);
+    this.x=this.sx+(this.tx-this.sx)*t;
+    this.y=this.sy+(this.ty-this.sy)*t;
+  }
+  draw(){
+    if(this.age<this.delay) return;
+    const a=Math.min(1,(this.age-this.delay)/120);
+    ctx.save(); ctx.globalAlpha=a;
+    ctx.beginPath(); ctx.strokeStyle=this.col+'44'; ctx.lineWidth=2;
+    ctx.moveTo(this.sx,this.sy); ctx.lineTo(this.x,this.y); ctx.stroke();
+    const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r*2.8);
+    g.addColorStop(0,this.col+'BB'); g.addColorStop(1,this.col+'00');
+    ctx.beginPath(); ctx.arc(this.x,this.y,this.r*2.8,0,Math.PI*2);
+    ctx.fillStyle=g; ctx.fill();
+    ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle=this.col; ctx.fill();
+    ctx.font=`bold ${Math.max(7,this.r*0.82)}px monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#000'; ctx.fillText(this.proto,this.x,this.y);
+    if(this.lbl){
+      const fs=Math.max(9,H*0.020);
+      ctx.font=`600 ${fs}px Inter,sans-serif`;
+      const tw=ctx.measureText(this.lbl).width;
+      ctx.fillStyle='rgba(0,0,0,0.75)';
+      ctx.fillRect(this.x-tw/2-4,this.y-this.r-19,tw+8,16);
+      ctx.fillStyle=this.col; ctx.textBaseline='bottom';
+      ctx.fillText(this.lbl,this.x,this.y-this.r-4);
+    }
+    ctx.restore();
+  }
+}
+
+function doExplode(x,y,col){
+  for(let i=0;i<20;i++){
+    const a=(i/20)*Math.PI*2, s=1.8+Math.random()*2.5;
+    sparks.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,a:1,col,r:2+Math.random()*3});
+  }
+}
+
+/* ═══ ARP OVERLAY ═══ */
+function setArp(state){
+  const ov=document.getElementById('arp-overlay');
+  const rows=document.getElementById('arp-rows');
+  ov.style.display='block';
+  if(state==='poisoned'){
+    rows.innerHTML=`
+      <div class="spill spill-bad">192.168.1.1&nbsp;&nbsp;&rarr; EE:EE:EE:ATTACK <span style="font-size:0.6rem;background:rgba(255,60,60,0.2);padding:1px 5px;border-radius:2px;color:#FF3C3C;margin-right:3px;">FAKE!</span></div>
+      <div class="spill spill-warn" style="margin-top:3px;">192.168.1.254 &rarr; EE:EE:EE:ATTACK <span style="font-size:0.6rem;background:rgba(255,100,0,0.2);padding:1px 5px;border-radius:2px;color:#FFAA44;margin-right:3px;">FAKE!</span></div>
+      <div style="color:rgba(255,100,100,0.5);font-size:0.62rem;margin-top:6px;font-family:'Segoe UI',sans-serif;direction:rtl;text-align:right;">كل الحركة موجّهة للمهاجم</div>`;
+  } else if(state==='poisoning'){
+    rows.innerHTML=`
+      <div class="spill spill-ok">192.168.1.1&nbsp;&nbsp;&rarr; AA:BB:CC:11:22:33 <span style="font-size:0.6rem;background:rgba(68,187,68,0.2);padding:1px 5px;border-radius:2px;color:#44BB44;">OK</span></div>
+      <div class="spill spill-warn" style="margin-top:3px;">192.168.1.254 &rarr; EE:EE:EE:ATTACK <span style="font-size:0.6rem;background:rgba(255,100,0,0.25);padding:1px 5px;border-radius:2px;color:#FFAA44;">CHANGING…</span></div>
+      <div style="color:rgba(255,170,68,0.5);font-size:0.62rem;margin-top:6px;font-family:'Segoe UI',sans-serif;direction:rtl;text-align:right;">يتم تسميم جدول البوابة الآن</div>`;
+  } else {
+    rows.innerHTML=`
+      <div class="spill spill-ok">192.168.1.1&nbsp;&nbsp;&rarr; AA:BB:CC:11:22:33 <span style="font-size:0.6rem;background:rgba(68,187,68,0.2);padding:1px 5px;border-radius:2px;color:#44BB44;">OK</span></div>
+      <div class="spill spill-ok" style="margin-top:3px;">192.168.1.254 &rarr; DD:EE:FF:44:55:66 <span style="font-size:0.6rem;background:rgba(68,187,68,0.2);padding:1px 5px;border-radius:2px;color:#44BB44;">OK</span></div>
+      <div style="color:rgba(68,187,68,0.45);font-size:0.62rem;margin-top:6px;font-family:'Segoe UI',sans-serif;direction:rtl;text-align:right;">جدول ARP صحيح — شبكة آمنة</div>`;
+  }
+}
+
+/* ═══ PILLS ═══ */
+function buildPills(){
+  const row=document.getElementById('pills-row');
+  row.innerHTML='';
+  PILL_LABELS.forEach((l,i)=>{
+    const d=document.createElement('div');
+    d.className='phase-pill idle'; d.id='pill-'+i; d.textContent=l;
+    row.appendChild(d);
+  });
+}
+function updatePills(cur){
+  PILL_LABELS.forEach((_,i)=>{
+    const el=document.getElementById('pill-'+i);
+    if(el) el.className='phase-pill '+(i<cur?'done':i===cur?'current':'idle');
+  });
+}
+
+/* ═══ LOOP (with pause support) ═══ */
+let lastT=0;
+function loop(ts){
+  if (!running) return;
+  const dt = Math.min(ts - lastT, 80);
+  lastT = ts;
+  ctx.clearRect(0,0,W,H);
+  drawGrid();
+  drawRoutes(currentPoisoned);
+  drawNodes(currentPoisoned);
+  if (!paused) {
+    tickPhase(dt);
+    packets.forEach(p=>{p.tick(dt);p.draw();});
+    packets = packets.filter(p=>!p.done);
+    sparks.forEach(s=>{
+      s.x+=s.vx; s.y+=s.vy; s.vx*=0.94; s.vy*=0.94; s.a-=0.026;
+      ctx.save(); ctx.globalAlpha=Math.max(0,s.a);
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=s.col; ctx.fill(); ctx.restore();
+    });
+    sparks = sparks.filter(s=>s.a>0);
+  } else {
+    // paused: only draw existing packets/sparks (static), no updates
+    packets.forEach(p=>p.draw());
+    sparks.forEach(s=>{
+      ctx.save(); ctx.globalAlpha=s.a;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=s.col; ctx.fill(); ctx.restore();
+    });
+  }
+  animId = requestAnimationFrame(loop);
+}
+
+function tickPhase(dt){
+  phTimer += dt;
+  const ph = PHASES[phase];
+  if(!phSpawned){
+    phSpawned = true;
+    currentPoisoned = !!ph.poisoned;
+    setArp(ph.arp);
+    document.getElementById('phase-en').textContent = ph.en;
+    document.getElementById('phase-ar').textContent = ph.ar;
+    document.getElementById('phase-box').style.display = 'block';
+    updatePills(phase);
+    setBadge(`🎭 Phase ${phase+1}/${PHASES.length}`,'#FF8888');
+    ph.pkts.forEach(cfg=>{
+      setTimeout(()=>{
+        if(running && !paused) packets.push(new Pkt(cfg));
+      }, cfg.delay||0);
+    });
+  }
+  if(phTimer >= ph.dur){
+    phTimer = 0;
+    phSpawned = false;
+    phase = (phase+1) % PHASES.length;
+    packets = [];
+  }
+}
+
+function setBadge(txt,col){
+  const b=document.getElementById('vis-badge');
+  b.textContent=txt; b.style.color=col;
+  b.style.background=col+'22'; b.style.borderColor=col+'44';
+}
+
+/* ═══ TOGGLE (start/stop) ═══ */
+window.toggleDemo = function(){
+  if(running){
+    running = false;
+    paused = false;
+    if(animId){ cancelAnimationFrame(animId); animId = null; }
+    packets = []; sparks = [];
+    currentPoisoned = false; phase = 0; phTimer = 0; phSpawned = false;
+    document.getElementById('demo-banner').style.display = 'none';
+    document.getElementById('step-legend').style.display = 'none';
+    document.getElementById('arp-overlay').style.display = 'none';
+    document.getElementById('phase-box').style.display = 'none';
+    document.getElementById('idle-hint').style.display = 'flex';
+    document.getElementById('btn-demo').innerHTML = '🎭 عرض الهجوم<br><span style="font-size:0.68rem;opacity:0.75;">Attack Scenario Demo</span>';
+    document.getElementById('btn-demo').style.cssText = 'background:linear-gradient(135deg,#6B0000,#AA1100);border:1px solid rgba(255,60,60,0.45);color:#fff;border-radius:9px;padding:10px 22px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .25s;line-height:1.35;min-width:160px;box-shadow:none;';
+    document.getElementById('btn-pause').style.display = 'none';
+    setBadge('⏸ خامل / Idle','rgba(255,255,255,0.25)');
+    ctx.clearRect(0,0,W,H);
+    drawGrid(); drawRoutes(false); drawNodes(false);
+  } else {
+    running = true;
+    paused = false;
+    phase = 0; phTimer = 0; phSpawned = false; packets = []; sparks = [];
+    document.getElementById('demo-banner').style.display = 'block';
+    document.getElementById('step-legend').style.display = 'block';
+    document.getElementById('idle-hint').style.display = 'none';
+    document.getElementById('btn-demo').innerHTML = '⏹ إيقاف العرض<br><span style="font-size:0.68rem;opacity:0.75;">Stop Demo</span>';
+    document.getElementById('btn-demo').style.cssText = 'background:linear-gradient(135deg,#AA0000,#FF2200);border:1px solid rgba(255,60,60,0.8);color:#fff;border-radius:9px;padding:10px 22px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .25s;line-height:1.35;min-width:160px;box-shadow:0 0 18px rgba(255,60,60,0.45);';
+    document.getElementById('btn-pause').style.display = 'inline-block';
+    document.getElementById('btn-pause').innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+    buildPills();
+    lastT = performance.now();
+    animId = requestAnimationFrame(loop);
+  }
+};
+
+/* ═══ PAUSE / RESUME ═══ */
+window.pauseDemo = function(){
+  if (!running) return;
+  paused = !paused;
+  const btn = document.getElementById('btn-pause');
+  if (paused) {
+    btn.innerHTML = '<i class="fa-solid fa-play"></i> Resume';
+  } else {
+    btn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+    // reset lastT to avoid huge dt after resume
+    lastT = performance.now();
+  }
+};
+
+/* ═══ INIT ═══ */
+function init(){
+  resize();
+  ctx.clearRect(0,0,W,H);
+  drawGrid(); drawRoutes(false); drawNodes(false);
+}
+window.addEventListener('resize',()=>{ resize(); if(!running){ ctx.clearRect(0,0,W,H); drawGrid(); drawRoutes(false); drawNodes(false); } });
+document.addEventListener('DOMContentLoaded',init);
+if(document.readyState!=='loading') init();
+
+})();
+</script>
+
+<!-- ══════════════ 1. WHAT IS MITM ══════════════ -->
+<div class="edu-section">
+    <div class="section-header">
+        <div class="section-icon-box" style="background:rgba(255,60,60,0.12); border:1px solid rgba(255,60,60,0.3);">
+            <span style="color:#FF3C3C;">☠️</span>
+        </div>
+        <div class="section-title-block">
+            <h2><i class="fa-solid fa-circle-question" style="color:#FF3C3C;"></i> What is a Man-in-the-Middle Attack?</h2>
+            <div class="ar">ما هو هجوم الرجل في المنتصف (MITM)؟</div>
+        </div>
+    </div>
+
+    <div class="bi-block">
+        <div class="bi-en">
+            <div class="lang-label">🇬🇧 English</div>
+            A <strong style="color:#fff;">Man-in-the-Middle (MITM) attack</strong> happens when an attacker secretly inserts themselves between two communicating parties — intercepting, reading, and possibly altering the data flowing between them. The victims are completely unaware because the attacker silently relays traffic while eavesdropping.
+        </div>
+        <div class="bi-ar">
+            <span class="lang-label">🇸🇦 عربي</span>
+            هجوم <strong style="color:#44BB44;">الرجل في المنتصف (MITM)</strong> يحدث عندما يُدخل المهاجم نفسه بشكل خفي بين طرفين يتواصلان — فيعترض البيانات ويقرأها وربما يعدّلها. الضحايا لا يعلمون بذلك، لأن المهاجم يُمرّر حركة البيانات بصمت بينما يتجسس عليها.
+        </div>
+    </div>
+
+    <!-- MITM Flow Diagram -->
+    <div class="scenario-visual">
+        <div style="text-align:center; margin-bottom:14px;">
+            <span style="color:#FF3C3C; font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">⚡ MITM Attack Flow — مخطط تدفق الهجوم</span>
+        </div>
+        <div style="overflow-x:auto;">
+        <div class="flow-nodes" style="min-width:520px;">
+            <div class="flow-node">
+                <div class="node-icon node-victim">💻</div>
+                <div class="node-label-en">Victim</div>
+                <div class="node-label-ar">الضحية</div>
+            </div>
+            <div class="flow-arrow" style="min-width:60px;">
+                <div class="arrow-line"></div>
+                <div class="arrow-label-en">Intercepted!</div>
+                <div class="arrow-label-ar">مُعترَض!</div>
+            </div>
+            <div class="flow-node">
+                <div class="node-icon node-attacker">👤</div>
+                <div class="node-label-en" style="color:#FF3C3C;">Attacker</div>
+                <div class="node-label-ar" style="color:#FF6666;">المهاجم</div>
+            </div>
+            <div class="flow-arrow" style="min-width:60px;">
+                <div class="arrow-line"></div>
+                <div class="arrow-label-en">Forwarded</div>
+                <div class="arrow-label-ar">مُعاد توجيهه</div>
+            </div>
+            <div class="flow-node">
+                <div class="node-icon node-server">🌐</div>
+                <div class="node-label-en">Server</div>
+                <div class="node-label-ar">الخادم</div>
+            </div>
+        </div>
+        </div>
+        <div style="text-align:center; margin-top:14px; padding:10px; background:rgba(255,60,60,0.07); border-radius:8px; border:1px solid rgba(255,60,60,0.15);">
+            <span style="color:#FF6666; font-size:0.8rem;">⚠️ Both parties think they're talking directly — but the attacker sees everything.</span><br>
+            <span style="color:rgba(255,150,150,0.7); font-size:0.77rem; direction:rtl; font-family:'Segoe UI',sans-serif;">كلا الطرفين يعتقدان أنهما يتحدثان مباشرة — لكن المهاجم يرى كل شيء.</span>
+        </div>
+    </div>
+
+    <!-- Steps -->
+    <div style="margin-top: 16px; margin-bottom: 8px; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
+        🔢 Attack Phases — مراحل الهجوم
+    </div>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-num" style="background:#FF3C3C;">1</div>
+            <div class="step-emoji">📡</div>
+            <div class="step-title-en">ARP Spoofing</div>
+            <div class="step-title-ar">تزوير ARP</div>
+            <div class="step-desc-en">Attacker sends fake ARP replies to poison the victim's and gateway's ARP tables.</div>
+            <div class="step-desc-ar">يرسل المهاجم ردود ARP مزيفة لتسميم جداول ARP لدى الضحية والبوابة.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num" style="background:#FF6600;">2</div>
+            <div class="step-emoji">🔀</div>
+            <div class="step-title-en">Traffic Redirect</div>
+            <div class="step-title-ar">إعادة توجيه الحركة</div>
+            <div class="step-desc-en">All network traffic now flows through the attacker's machine instead of directly.</div>
+            <div class="step-desc-ar">كل حركة الشبكة تمر الآن عبر جهاز المهاجم بدلاً من المسار المباشر.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num" style="background:#FFAA00;">3</div>
+            <div class="step-emoji">👁️</div>
+            <div class="step-title-en">Interception</div>
+            <div class="step-title-ar">الاعتراض</div>
+            <div class="step-desc-en">Attacker reads unencrypted data: passwords, emails, HTTP payloads, cookies.</div>
+            <div class="step-desc-ar">يقرأ المهاجم البيانات غير المشفرة: كلمات المرور، الإيميلات، محتوى HTTP، والكوكيز.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num" style="background:#CC44FF;">4</div>
+            <div class="step-emoji">✏️</div>
+            <div class="step-title-en">Modification</div>
+            <div class="step-title-ar">التعديل</div>
+            <div class="step-desc-en">The attacker can alter data packets — injecting content, changing emails, stealing credentials.</div>
+            <div class="step-desc-ar">يمكن للمهاجم تعديل حزم البيانات — حقن محتوى، تغيير الرسائل، سرقة بيانات الدخول.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num" style="background:#44BB44;">5</div>
+            <div class="step-emoji">🛡️</div>
+            <div class="step-title-en">Defense: TLS</div>
+            <div class="step-title-ar">الدفاع: التشفير</div>
+            <div class="step-desc-en">HTTPS/TLS encryption makes intercepted data unreadable — even if captured.</div>
+            <div class="step-desc-ar">تشفير HTTPS/TLS يجعل البيانات المعترضة غير قابلة للقراءة — حتى لو تم التقاطها.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ 2. ARP SPOOFING DEEP DIVE ══════════════ -->
+<div class="edu-section">
+    <div class="section-header">
+        <div class="section-icon-box" style="background:rgba(255,100,0,0.12); border:1px solid rgba(255,100,0,0.3);">
+            <span>📡</span>
+        </div>
+        <div class="section-title-block">
+            <h2><i class="fa-solid fa-wifi" style="color:#FFAA44;"></i> ARP Spoofing — How It Works</h2>
+            <div class="ar">تزوير ARP — كيف يعمل؟</div>
+        </div>
+    </div>
+
+    <div class="bi-block">
+        <div class="bi-en">
+            <div class="lang-label">🇬🇧 English</div>
+            ARP (Address Resolution Protocol) maps IP addresses to MAC addresses on a local network. Because ARP has <strong style="color:#fff;">no authentication</strong>, any device can broadcast fake ARP replies claiming to own any IP address. The attacker exploits this to redirect traffic meant for the gateway through their own machine.
+        </div>
+        <div class="bi-ar">
+            <span class="lang-label">🇸🇦 عربي</span>
+            ARP (بروتوكول تحليل العناوين) يربط عناوين IP بعناوين MAC على الشبكة المحلية. لأن ARP <strong style="color:#44BB44;">لا يحتوي على مصادقة</strong>، أي جهاز يمكنه إرسال ردود ARP مزيفة يدّعي فيها امتلاك أي عنوان IP. يستغل المهاجم هذا لتحويل حركة المرور المخصصة للبوابة عبر جهازه.
+        </div>
+    </div>
+
+    <!-- ARP Table Comparison Diagram -->
+    <div class="attack-diagram">
+        <div style="text-align:center; margin-bottom:14px; color:#FFAA44; font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
+            📋 ARP Cache Comparison — مقارنة جدول ARP
+        </div>
+        <div class="arp-diagram">
+            <div class="arp-box">
+                <div class="arp-box-title" style="color:#44BB44;">✅ Before Attack — قبل الهجوم</div>
+                <div class="arp-row normal">
+                    <span>192.168.1.1 (Gateway)</span>
+                    <span>→ AA:BB:CC:11:22:33</span>
+                    <span class="arp-badge ok">Real</span>
+                </div>
+                <div class="arp-row normal">
+                    <span>192.168.1.100 (Victim)</span>
+                    <span>→ DD:EE:FF:44:55:66</span>
+                    <span class="arp-badge ok">Real</span>
+                </div>
+                <div style="color:rgba(68,187,68,0.6); font-size:0.72rem; margin-top:8px; text-align:right; direction:rtl; font-family:'Segoe UI',sans-serif;">
+                    الجداول صحيحة — البيانات تصل مباشرة
+                </div>
+            </div>
+            <div class="arp-box">
+                <div class="arp-box-title" style="color:#FF3C3C;">⚠️ After Spoofing — بعد التزوير</div>
+                <div class="arp-row poisoned">
+                    <span>192.168.1.1 (Gateway)</span>
+                    <span>→ <strong>EE:EE:EE:ATTK:ER</strong></span>
+                    <span class="arp-badge bad">Fake!</span>
+                </div>
+                <div class="arp-row changed">
+                    <span>192.168.1.100 (Victim)</span>
+                    <span>→ <strong>EE:EE:EE:ATTK:ER</strong></span>
+                    <span class="arp-badge bad">Fake!</span>
+                </div>
+                <div style="color:rgba(255,100,100,0.6); font-size:0.72rem; margin-top:8px; text-align:right; direction:rtl; font-family:'Segoe UI',sans-serif;">
+                    كلا العنوانين يشيران إلى المهاجم!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network topology SVG -->
+    <div class="scenario-visual" style="margin-top:14px;">
+        <div style="text-align:center; margin-bottom:12px; color:#FFAA44; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
+            🖧 Network Topology — طبولوجيا الشبكة
+        </div>
+        <svg viewBox="0 0 700 240" width="100%" style="max-width:700px; display:block; margin:auto;">
+            <defs>
+                <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                    <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(68,187,68,0.06)" stroke-width="1"/>
+                </pattern>
+                <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#FF3C3C"/>
+                </marker>
+                <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#44BB44"/>
+                </marker>
+            </defs>
+            <rect width="700" height="240" rx="8" fill="rgba(0,0,0,0.3)"/>
+            <rect width="700" height="240" rx="8" fill="url(#grid)"/>
+            <circle cx="100" cy="120" r="38" fill="rgba(68,100,255,0.15)" stroke="#4466FF" stroke-width="2"/>
+            <text x="100" y="113" text-anchor="middle" fill="#4466FF" font-size="22">💻</text>
+            <text x="100" y="134" text-anchor="middle" fill="#4466FF" font-size="11" font-weight="bold">Victim</text>
+            <text x="100" y="147" text-anchor="middle" fill="rgba(68,100,255,0.6)" font-size="9">الضحية</text>
+            <text x="100" y="170" text-anchor="middle" fill="rgba(100,100,255,0.5)" font-size="8">192.168.1.100</text>
+            <circle cx="600" cy="120" r="38" fill="rgba(68,187,68,0.15)" stroke="#44BB44" stroke-width="2"/>
+            <text x="600" y="113" text-anchor="middle" fill="#44BB44" font-size="22">🌐</text>
+            <text x="600" y="134" text-anchor="middle" fill="#44BB44" font-size="11" font-weight="bold">Gateway</text>
+            <text x="600" y="147" text-anchor="middle" fill="rgba(68,187,68,0.6)" font-size="9">البوابة</text>
+            <text x="600" y="170" text-anchor="middle" fill="rgba(68,187,68,0.5)" font-size="8">192.168.1.1</text>
+            <circle cx="350" cy="60" r="38" fill="rgba(255,60,60,0.18)" stroke="#FF3C3C" stroke-width="2.5"/>
+            <text x="350" y="53" text-anchor="middle" fill="#FF3C3C" font-size="22">👤</text>
+            <text x="350" y="74" text-anchor="middle" fill="#FF3C3C" font-size="11" font-weight="bold">Attacker</text>
+            <text x="350" y="87" text-anchor="middle" fill="rgba(255,60,60,0.7)" font-size="9">المهاجم</text>
+            <line x1="138" y1="120" x2="562" y2="120" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" stroke-dasharray="6,4"/>
+            <text x="350" y="135" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="9">Original path (blocked)</text>
+            <line x1="133" y1="97" x2="312" y2="70" stroke="#FF3C3C" stroke-width="2" marker-end="url(#arrowRed)"/>
+            <text x="200" y="74" text-anchor="middle" fill="#FF3C3C" font-size="8" font-weight="bold">Poisoned ARP</text>
+            <text x="200" y="84" text-anchor="middle" fill="rgba(255,100,100,0.6)" font-size="7">ARP مسموم</text>
+            <line x1="387" y1="70" x2="568" y2="97" stroke="#FF3C3C" stroke-width="2" marker-end="url(#arrowRed)"/>
+            <text x="496" y="74" text-anchor="middle" fill="#FF3C3C" font-size="8" font-weight="bold">Forwarded</text>
+            <text x="496" y="84" text-anchor="middle" fill="rgba(255,100,100,0.6)" font-size="7">مُعاد توجيهه</text>
+            <rect x="270" y="155" width="160" height="42" rx="6" fill="rgba(255,60,60,0.1)" stroke="rgba(255,60,60,0.3)" stroke-width="1"/>
+            <text x="350" y="172" text-anchor="middle" fill="#FF3C3C" font-size="9" font-weight="bold">⚠ ARP CACHE POISONED</text>
+            <text x="350" y="187" text-anchor="middle" fill="rgba(255,150,150,0.7)" font-size="8">جدول ARP مسموم — المهاجم يرى كل شيء</text>
+        </svg>
+    </div>
+</div>
+
+<!-- ══════════════ 3. SMTP INTERCEPTION ══════════════ -->
+<div class="edu-section">
+    <div class="section-header">
+        <div class="section-icon-box" style="background:rgba(200,136,255,0.12); border:1px solid rgba(200,136,255,0.3);">
+            <span>📧</span>
+        </div>
+        <div class="section-title-block">
+            <h2><i class="fa-solid fa-envelope-open-text" style="color:#CC88FF;"></i> SMTP Email Interception</h2>
+            <div class="ar">اعتراض البريد الإلكتروني عبر SMTP</div>
+        </div>
+    </div>
+
+    <div class="bi-block">
+        <div class="bi-en">
+            <div class="lang-label">🇬🇧 English</div>
+            SMTP (Simple Mail Transfer Protocol) sends emails over port 25/587 <strong style="color:#FF6666;">without encryption</strong> by default. Once an attacker performs ARP spoofing, they can intercept all email traffic — reading the sender, recipient, subject, and body, then modifying and forwarding the email to the real server undetected.
+        </div>
+        <div class="bi-ar">
+            <span class="lang-label">🇸🇦 عربي</span>
+            SMTP (بروتوكول نقل البريد البسيط) يرسل الإيميلات عبر المنفذ 25/587 <strong style="color:#FF6666;">بدون تشفير</strong> بشكل افتراضي. بمجرد أن يُنفّذ المهاجم تزوير ARP، يمكنه اعتراض كل حركة البريد — قراءة المرسِل، المستقبِل، الموضوع، والمحتوى، ثم تعديلها وإعادة توجيهها للخادم الحقيقي دون أن يُكتشف.
+        </div>
+    </div>
+
+    <!-- SMTP Flow -->
+    <div class="scenario-visual">
+        <div style="text-align:center; margin-bottom:14px; color:#CC88FF; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
+            📬 SMTP Interception Flow — مسار اعتراض SMTP
+        </div>
+        <svg viewBox="0 0 700 200" width="100%" style="max-width:700px; display:block; margin:auto;">
+            <defs>
+                <marker id="arrPurple" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#CC88FF"/>
+                </marker>
+            </defs>
+            <rect width="700" height="200" rx="8" fill="rgba(0,0,0,0.3)"/>
+            <rect x="20" y="70" width="100" height="60" rx="8" fill="rgba(68,100,255,0.12)" stroke="#4466FF" stroke-width="1.5"/>
+            <text x="70" y="96" text-anchor="middle" fill="#4466FF" font-size="18">📧</text>
+            <text x="70" y="112" text-anchor="middle" fill="#4466FF" font-size="10" font-weight="bold">Email Client</text>
+            <text x="70" y="124" text-anchor="middle" fill="rgba(68,100,255,0.6)" font-size="8">عميل البريد</text>
+            <line x1="120" y1="100" x2="240" y2="100" stroke="#CC88FF" stroke-width="1.5" marker-end="url(#arrPurple)"/>
+            <text x="180" y="92" text-anchor="middle" fill="#CC88FF" font-size="8" font-weight="bold">SMTP (plain)</text>
+            <text x="180" y="115" text-anchor="middle" fill="rgba(200,136,255,0.6)" font-size="7">نص واضح!</text>
+            <rect x="245" y="55" width="110" height="90" rx="8" fill="rgba(255,60,60,0.12)" stroke="#FF3C3C" stroke-width="2"/>
+            <text x="300" y="82" text-anchor="middle" fill="#FF3C3C" font-size="18">👤</text>
+            <text x="300" y="99" text-anchor="middle" fill="#FF3C3C" font-size="9" font-weight="bold">Attacker</text>
+            <text x="300" y="111" text-anchor="middle" fill="rgba(255,60,60,0.6)" font-size="7">يقرأ المحتوى</text>
+            <text x="300" y="124" text-anchor="middle" fill="rgba(255,100,100,0.5)" font-size="7">يعدّل البيانات</text>
+            <text x="300" y="136" text-anchor="middle" fill="rgba(255,100,100,0.4)" font-size="7">Reads &amp; Modifies</text>
+            <line x1="355" y1="100" x2="480" y2="100" stroke="#CC88FF" stroke-width="1.5" marker-end="url(#arrPurple)"/>
+            <text x="418" y="92" text-anchor="middle" fill="#CC88FF" font-size="8" font-weight="bold">Modified!</text>
+            <text x="418" y="115" text-anchor="middle" fill="rgba(200,136,255,0.6)" font-size="7">معدّل!</text>
+            <rect x="485" y="70" width="100" height="60" rx="8" fill="rgba(255,170,68,0.12)" stroke="#FFAA44" stroke-width="1.5"/>
+            <text x="535" y="96" text-anchor="middle" fill="#FFAA44" font-size="18">📮</text>
+            <text x="535" y="112" text-anchor="middle" fill="#FFAA44" font-size="10" font-weight="bold">SMTP Server</text>
+            <text x="535" y="124" text-anchor="middle" fill="rgba(255,170,68,0.6)" font-size="8">خادم البريد</text>
+            <line x1="585" y1="100" x2="668" y2="100" stroke="#44BB44" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+            <text x="627" y="92" text-anchor="middle" fill="#44BB44" font-size="8">Delivered</text>
+            <text x="627" y="115" text-anchor="middle" fill="rgba(68,187,68,0.6)" font-size="7">مُسلَّم</text>
+            <rect x="670" y="78" width="22" height="44" rx="4" fill="rgba(68,187,68,0.1)" stroke="rgba(68,187,68,0.3)" stroke-width="1"/>
+            <text x="681" y="104" text-anchor="middle" fill="#44BB44" font-size="10">📥</text>
+        </svg>
+    </div>
+</div>
+
+<!-- ══════════════ 4. HTTP vs HTTPS ══════════════ -->
+<div class="edu-section">
+    <div class="section-header">
+        <div class="section-icon-box" style="background:rgba(68,187,68,0.12); border:1px solid rgba(68,187,68,0.3);">
+            <span>🔒</span>
+        </div>
+        <div class="section-title-block">
+            <h2><i class="fa-solid fa-lock" style="color:#44BB44;"></i> HTTP vs HTTPS — Encryption Matters</h2>
+            <div class="ar">HTTP مقابل HTTPS — التشفير يهمّ</div>
+        </div>
+    </div>
+
+    <div class="bi-block">
+        <div class="bi-en">
+            <div class="lang-label">🇬🇧 English</div>
+            HTTP sends data as <strong style="color:#FF6666;">plain text</strong> — anyone intercepting the traffic can read passwords, form inputs, and sensitive information. HTTPS encrypts the entire communication using <strong style="color:#44BB44;">TLS (Transport Layer Security)</strong>, making intercepted packets completely unreadable without the private key.
+        </div>
+        <div class="bi-ar">
+            <span class="lang-label">🇸🇦 عربي</span>
+            HTTP يرسل البيانات كـ<strong style="color:#FF6666;">نص واضح</strong> — أي شخص يعترض الحركة يمكنه قراءة كلمات المرور، مدخلات النماذج، والمعلومات الحساسة. HTTPS يُشفّر كامل الاتصال باستخدام <strong style="color:#44BB44;">TLS (أمان طبقة النقل)</strong>، مما يجعل الحزم المعترضة غير قابلة للقراءة تماماً بدون المفتاح الخاص.
+        </div>
+    </div>
+
+    <!-- Visual comparison -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px;">
+        <div style="background:rgba(255,60,60,0.07); border:1px solid rgba(255,60,60,0.25); border-radius:10px; padding:16px;">
+            <div style="color:#FF4444; font-weight:800; font-size:0.9rem; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-lock-open"></i> HTTP (Port 80)
+            </div>
+            <div style="font-family:'Courier New',monospace; font-size:0.72rem; color:#FF8888; background:rgba(0,0,0,0.4); border-radius:6px; padding:10px; line-height:1.7;">
+                GET /login HTTP/1.1<br>
+                Host: example.com<br>
+                <span style="color:#FF4444; font-weight:bold;">username=admin</span><br>
+                <span style="color:#FF4444; font-weight:bold;">password=secret123</span>
+            </div>
+            <div style="color:rgba(255,100,100,0.7); font-size:0.74rem; margin-top:8px; direction:rtl; font-family:'Segoe UI',sans-serif; text-align:right;">
+                ⚠️ كلمة المرور مرئية للمهاجم!
+            </div>
+        </div>
+        <div style="background:rgba(68,187,68,0.07); border:1px solid rgba(68,187,68,0.25); border-radius:10px; padding:16px;">
+            <div style="color:#44BB44; font-weight:800; font-size:0.9rem; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-lock"></i> HTTPS (Port 443)
+            </div>
+            <div style="font-family:'Courier New',monospace; font-size:0.72rem; color:#44BB44; background:rgba(0,0,0,0.4); border-radius:6px; padding:10px; line-height:1.7;">
+                TLS 1.3 Encrypted:<br>
+                <span style="color:rgba(68,187,68,0.5);">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span><br>
+                <span style="color:rgba(68,187,68,0.4);">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span><br>
+                <span style="color:rgba(68,187,68,0.3);">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span>
+            </div>
+            <div style="color:rgba(68,187,68,0.7); font-size:0.74rem; margin-top:8px; direction:rtl; font-family:'Segoe UI',sans-serif; text-align:right;">
+                ✅ البيانات مشفرة — المهاجم لا يرى شيئاً
+            </div>
+        </div>
+    </div>
+
+    <!-- Protocol Table -->
+    <div style="margin-top:18px; margin-bottom:8px; color:var(--text-muted); font-size:0.78rem; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">
+        📋 Protocol Security Reference — مرجع أمان البروتوكولات
+    </div>
+    <div class="proto-table-wrap">
+        <table class="proto-table">
+            <thead>
+                <tr><th>Protocol / البروتوكول</th><th>Port / المنفذ</th><th>Encrypted? / مشفّر؟</th><th>Vulnerability / الثغرة</th><th>Defense / الحماية</th>
+            </thead>
+            <tbody>
+                <tr><td><span class="badge badge-http">HTTP</span></td><td>80</td><td class="enc-no"><i class="fa-solid fa-lock-open fa-xs"></i> No — لا</td><td>Full payload visible — passwords, cookies / الحمولة مرئية بالكامل</td><td>Use HTTPS / استخدم HTTPS</td></tr>
+                <tr><td><span class="badge badge-https">HTTPS</span></td><td>443</td><td class="enc-yes"><i class="fa-solid fa-lock fa-xs"></i> Yes (TLS) — نعم</td><td>Certificate not validated / شهادة غير مُتحقق منها</td><td>Certificate Pinning, HSTS</td></tr>
+                <tr><td><span class="badge badge-smtp">SMTP</span></td><td>25/587</td><td class="enc-no"><i class="fa-solid fa-lock-open fa-xs"></i> No — لا</td><td>Emails readable in transit / الإيميلات مقروءة أثناء النقل</td><td>SMTPS / STARTTLS</td></tr>
+                <tr><td><span class="badge badge-smtps">SMTPS</span></td><td>465</td><td class="enc-yes"><i class="fa-solid fa-lock fa-xs"></i> Yes (TLS) — نعم</td><td>Low — needs cert enforcement / منخفضة</td><td>Certificate Validation / التحقق من الشهادة</td></tr>
+                <tr><td><span class="badge badge-arp">ARP</span></td><td>Layer 2</td><td class="enc-no"><i class="fa-solid fa-lock-open fa-xs"></i> No — لا</td><td>No auth — spoofing trivial / لا مصادقة — التزوير سهل</td><td>Dynamic ARP Inspection / فحص ARP الديناميكي</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══════════════ 5. PROTECTION / DEFENSE ══════════════ -->
+<div class="edu-section">
+    <div class="section-header">
+        <div class="section-icon-box" style="background:rgba(68,187,68,0.12); border:1px solid rgba(68,187,68,0.3);">
+            <span>🛡️</span>
+        </div>
+        <div class="section-title-block">
+            <h2><i class="fa-solid fa-shield-halved" style="color:#44BB44;"></i> How to Protect Yourself</h2>
+            <div class="ar">كيف تحمي نفسك من هجمات MITM</div>
+        </div>
+    </div>
+
+    <div class="bi-block">
+        <div class="bi-en">
+            <div class="lang-label">🇬🇧 English</div>
+            Understanding the attack is only half the battle. Real cybersecurity means knowing how to defend against these techniques. Below are the most effective countermeasures against MITM attacks — covering both technical and behavioral defenses.
+        </div>
+        <div class="bi-ar">
+            <span class="lang-label">🇸🇦 عربي</span>
+            فهم الهجوم هو نصف المعركة فقط. الأمن السيبراني الحقيقي يعني معرفة كيفية الدفاع ضد هذه التقنيات. فيما يلي أكثر التدابير المضادة فعالية ضد هجمات MITM — تشمل الدفاعات التقنية والسلوكية.
+        </div>
+    </div>
+
+    <div class="protect-grid">
+        <div class="protect-card"><div class="protect-icon">🔒</div><div class="protect-title-en">Always Use HTTPS</div><div class="protect-title-ar">استخدم HTTPS دائماً</div><div class="protect-desc">Look for the padlock icon. HTTPS encrypts all data between you and the server, making intercepted packets unreadable.</div><div class="protect-desc-ar">ابحث عن أيقونة القفل. HTTPS يُشفّر كل البيانات بينك وبين الخادم، مما يجعل الحزم المعترضة غير قابلة للقراءة.</div></div>
+        <div class="protect-card"><div class="protect-icon">🔐</div><div class="protect-title-en">Use a VPN</div><div class="protect-title-ar">استخدم VPN</div><div class="protect-desc">A Virtual Private Network encrypts your entire internet connection, protecting all traffic on public or untrusted networks.</div><div class="protect-desc-ar">الشبكة الافتراضية الخاصة تُشفّر كامل اتصالك بالإنترنت، مما يحمي كل الحركة على الشبكات العامة أو غير الموثوقة.</div></div>
+        <div class="protect-card"><div class="protect-icon">📡</div><div class="protect-title-en">Dynamic ARP Inspection</div><div class="protect-title-ar">فحص ARP الديناميكي</div><div class="protect-desc">Network switches can verify ARP packets against a trusted DHCP binding table, blocking spoofed ARP replies.</div><div class="protect-desc-ar">مبدّلات الشبكة يمكنها التحقق من حزم ARP مقابل جدول ربط DHCP الموثوق، مما يمنع ردود ARP المزيفة.</div></div>
+        <div class="protect-card"><div class="protect-icon">📜</div><div class="protect-title-en">Certificate Pinning</div><div class="protect-title-ar">تثبيت الشهادة</div><div class="protect-desc">Applications can "pin" the expected server certificate, rejecting any certificate not matching — even if it's signed by a CA.</div><div class="protect-desc-ar">التطبيقات يمكنها "تثبيت" شهادة الخادم المتوقعة، ورفض أي شهادة لا تطابقها — حتى لو كانت موقّعة من CA.</div></div>
+        <div class="protect-card"><div class="protect-icon">⚓</div><div class="protect-title-en">HSTS (HTTP Strict Transport Security)</div><div class="protect-title-ar">أمان نقل HTTP الصارم</div><div class="protect-desc">HSTS tells browsers to only connect via HTTPS, preventing downgrade attacks that force HTTP connections.</div><div class="protect-desc-ar">HSTS يخبر المتصفحات بالاتصال عبر HTTPS فقط، مما يمنع هجمات التخفيض التي تفرض اتصالات HTTP.</div></div>
+        <div class="protect-card"><div class="protect-icon">🏠</div><div class="protect-title-en">Avoid Public Wi-Fi</div><div class="protect-title-ar">تجنب Wi-Fi العام</div><div class="protect-desc">Public networks are prime hunting grounds for MITM attackers. Use mobile data or a VPN when on public networks.</div><div class="protect-desc-ar">الشبكات العامة هي أرض خصبة لمهاجمي MITM. استخدم البيانات الجوال أو VPN عند الاتصال بالشبكات العامة.</div></div>
+    </div>
+</div>
+
+<!-- ══════════════ 6. PLATFORM FEATURES ══════════════ -->
+<div class="edu-section">
+    <div class="section-header">
+        <div class="section-icon-box" style="background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.3);">
+            <span>⚙️</span>
+        </div>
+        <div class="section-title-block">
+            <h2><i class="fa-solid fa-wrench" style="color:var(--gold-primary);"></i> SilentSnare Platform Features</h2>
+            <div class="ar">ميزات منصة SilentSnare</div>
+        </div>
+    </div>
+
+    <div class="bi-block" style="margin-bottom:16px;">
+        <div class="bi-en"><div class="lang-label">🇬🇧 English</div>SilentSnare provides an interactive, lab-based environment to safely explore and understand MITM attacks. Every feature below is designed for educational use in isolated virtual networks only.</div>
+        <div class="bi-ar"><span class="lang-label">🇸🇦 عربي</span>SilentSnare توفر بيئة تفاعلية تستند إلى المختبر لاستكشاف وفهم هجمات MITM بأمان. كل ميزة أدناه مصممة للاستخدام التعليمي في الشبكات الافتراضية المعزولة فقط.</div>
+    </div>
+
+    <div class="features-grid">
+        <a href="/sniffer" class="feature-card"><div class="feature-card-icon">📡</div><div class="feature-card-title-en">Network Scanner</div><div class="feature-card-title-ar">فاحص الشبكة</div><div class="feature-card-desc">Discover active devices on the local network using ARP broadcast — maps IP ↔ MAC.</div><span class="feature-card-link">→ Sniffer</span></a>
+        <a href="/scenarios" class="feature-card"><div class="feature-card-icon">⚡</div><div class="feature-card-title-en">ARP Spoofing</div><div class="feature-card-title-ar">تزوير ARP</div><div class="feature-card-desc">Position your machine as man-in-the-middle by poisoning ARP caches of victim and gateway.</div><span class="feature-card-link">→ Scenario 1</span></a>
+        <a href="/scenarios" class="feature-card"><div class="feature-card-icon">🌐</div><div class="feature-card-title-en">HTTP Interception</div><div class="feature-card-title-ar">اعتراض HTTP</div><div class="feature-card-desc">Redirect port 80 traffic through a proxy; read, modify, and forward plain-text HTTP requests.</div><span class="feature-card-link">→ Scenario 1</span></a>
+        <a href="/scenario2" class="feature-card"><div class="feature-card-icon">📧</div><div class="feature-card-title-en">SMTP Interception</div><div class="feature-card-title-ar">اعتراض SMTP</div><div class="feature-card-desc">Intercept emails, read and modify subject/body, then forward to the real SMTP server.</div><span class="feature-card-link">→ Scenario 2</span></a>
+        <a href="/inspector" class="feature-card"><div class="feature-card-icon">🔍</div><div class="feature-card-title-en">Payload Inspector</div><div class="feature-card-title-ar">فاحص الحمولة</div><div class="feature-card-desc">Analyze captured packets — filter, search, and inspect sensitive data payloads in detail.</div><span class="feature-card-link">→ Inspector</span></a>
+        <a href="/visual-traffic" class="feature-card"><div class="feature-card-icon">📊</div><div class="feature-card-title-en">Visual Traffic</div><div class="feature-card-title-ar">حركة مرئية</div><div class="feature-card-desc">Protocol distribution charts and live traffic flow visualization with real-time updates.</div><span class="feature-card-link">→ Visual Traffic</span></a>
+    </div>
+</div>
+
+<!-- ══════════════ 7. GOALS + WARNING ══════════════ -->
+<div class="edu-section">
+    <div class="section-header">
+        <div class="section-icon-box" style="background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.3);">
+            <span>🎯</span>
+        </div>
+        <div class="section-title-block">
+            <h2><i class="fa-solid fa-bullseye" style="color:var(--gold-primary);"></i> Learning Objectives</h2>
+            <div class="ar">الأهداف التعليمية</div>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:12px 14px;">
+            <div style="color:var(--gold-primary); font-size:0.72rem; font-weight:700; text-transform:uppercase; margin-bottom:10px;">🇬🇧 Learning Goals</div>
+            <ul style="list-style:none; padding:0; margin:0;">
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; margin-bottom:7px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> Understand how ARP spoofing enables MITM positioning</li>
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; margin-bottom:7px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> Capture and analyze unencrypted HTTP and SMTP traffic</li>
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; margin-bottom:7px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> Distinguish between encrypted vs unencrypted protocols</li>
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; margin-bottom:7px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> Modify intercepted data and understand the impact</li>
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> Apply countermeasures: TLS, VPN, ARP inspection</li>
+            </ul>
+        </div>
+        <div style="background:rgba(68,187,68,0.05); border:1px solid rgba(68,187,68,0.12); border-radius:8px; padding:12px 14px; direction:rtl; text-align:right;">
+            <div style="color:var(--gold-primary); font-size:0.72rem; font-weight:700; text-transform:uppercase; margin-bottom:10px;">🇸🇦 الأهداف التعليمية</div>
+            <ul style="list-style:none; padding:0; margin:0;">
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; flex-direction:row-reverse; margin-bottom:7px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> فهم كيف يُمكّن تزوير ARP من موضع MITM</li>
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; flex-direction:row-reverse; margin-bottom:7px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> التقاط وتحليل حركة HTTP وSMTP غير المشفرة</li>
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; flex-direction:row-reverse; margin-bottom:7px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> التمييز بين البروتوكولات المشفرة وغير المشفرة</li>
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; flex-direction:row-reverse; margin-bottom:7px;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> تعديل البيانات المعترضة وفهم التأثير</li>
+                <li style="color:var(--text-muted); font-size:0.82rem; display:flex; gap:8px; flex-direction:row-reverse;"><i class="fa-solid fa-check-circle" style="color:#44BB44; margin-top:2px;"></i> تطبيق التدابير المضادة: TLS، VPN، فحص ARP</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="warn-banner">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#FFAA44; margin-top:1px;"></i>
+        <div class="warn-banner-text">
+            <strong>⚠️ Legal & Ethical Warning:</strong> All attacks demonstrated by SilentSnare must be performed exclusively in an isolated virtual lab environment. Never use these techniques on real networks without explicit written authorization. Unauthorized use is illegal and unethical.
+            <div class="warn-banner-ar">
+                تحذير قانوني وأخلاقي: جميع الهجمات التي يُوضّحها SilentSnare يجب تنفيذها حصراً في بيئة مختبر افتراضي معزولة. لا تستخدم هذه التقنيات أبداً على الشبكات الحقيقية دون تفويض كتابي صريح. الاستخدام غير المصرح به غير قانوني وغير أخلاقي.
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

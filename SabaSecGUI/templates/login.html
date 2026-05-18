@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilentSnare – Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+          integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Animated particles background -->
+<canvas id="login-particles" style="position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;"></canvas>
+
+<div class="login-container">
+    <div class="login-card">
+
+        <!-- Logo & title -->
+        <div style="text-align: center; margin-bottom: 1.8rem;">
+            <div style="font-size: 3.5rem; filter: drop-shadow(0 0 14px rgba(212,175,55,0.55));">🎯</div>
+            <h2 style="color: #FFD700; margin: 0.6rem 0 0.25rem; font-size: 1.9rem; letter-spacing: 1px; font-weight: 700;">
+                SilentSnare
+            </h2>
+            <p style="color: #a0a0b0; font-size: 0.85rem; margin: 0;">MITM Educational Platform</p>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="notification {{ category }}" style="margin-bottom: 1rem; border-radius: 40px; text-align: center; justify-content: center;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Login form -->
+        <form method="POST">
+            <div class="input-group" style="margin-bottom: 1.2rem;">
+                <label for="username" style="color: #FFED4E; margin-bottom: 6px;">
+                    <i class="fa-solid fa-user fa-xs"></i> Username
+                </label>
+                <input type="text" id="username" name="username" required
+                       placeholder="Enter username"
+                       style="width:100%; background:rgba(20,20,30,0.9); border:1px solid rgba(212,175,55,0.45); border-radius:40px; padding:11px 20px; color:#fff; font-size:14px;">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 1.6rem;">
+                <label for="password" style="color: #FFED4E; margin-bottom: 6px;">
+                    <i class="fa-solid fa-lock fa-xs"></i> Password
+                </label>
+                <input type="password" id="password" name="password" required
+                       placeholder="Enter password"
+                       style="width:100%; background:rgba(20,20,30,0.9); border:1px solid rgba(212,175,55,0.45); border-radius:40px; padding:11px 20px; color:#fff; font-size:14px;">
+            </div>
+
+            <button type="submit" class="btn-primary"
+                    style="width:100%; background:linear-gradient(135deg,#FFD700,#B8860B); color:#000; font-weight:700; border:none; border-radius:40px; padding:12px; font-size:1rem; cursor:pointer; transition:all 0.3s; letter-spacing:0.5px;">
+                <i class="fa-solid fa-unlock"></i> Access Platform
+            </button>
+        </form>
+
+        <!-- Footer -->
+        <div style="margin-top:2rem; text-align:center; font-size:0.72rem; color:#555; border-top:1px solid rgba(212,175,55,0.18); padding-top:1rem;">
+            <span>SilentSnare v2.0 – Educational MITM Simulator</span><br>
+            <span style="color:#433;">Isolated lab environment only</span>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<style>
+    .login-container input:focus {
+        outline: none;
+        border-color: #FFD700 !important;
+        box-shadow: 0 0 0 2px rgba(255,215,0,0.18) !important;
+    }
+    .btn-primary:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 22px rgba(255,215,0,0.38) !important;
+        opacity: 1 !important;
+    }
+    .login-container { position: relative; z-index: 1; }
+</style>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/particles.js') }}"></script>
+<script>
+    initParticles('login-particles', {
+        count: 35,
+        speed: 0.22,
+        dotRadius: 1.6,
+        maxDist: 110,
+        dotOpacity: 0.42,
+        lineOpacity: 0.11
+    });
+</script>
+</body>
+</html>

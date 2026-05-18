@@ -1,0 +1,41 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║            SilentSnare — Python Requirements                     ║
+# ║            MITM Educational Platform v2.0                        ║
+# ╚══════════════════════════════════════════════════════════════════╝
+#
+# Installation:
+#
+#   [Kali Linux / Debian — system-wide]
+#     sudo pip install --break-system-packages -r requirements.txt
+#
+#   [Standard Python / venv]
+#     pip install -r requirements.txt
+#
+#   [Quick auto-install]
+#     chmod +x install.sh && sudo ./install.sh
+#
+# Requires: Python 3.10 or higher
+# ─────────────────────────────────────────────────────────────────────
+
+# ─── Web Framework ────────────────────────────────────────────────────
+Flask==3.1.2
+Werkzeug>=3.0.0
+
+# ─── Real-time Communication (WebSocket) ──────────────────────────────
+flask-socketio==5.5.1
+python-socketio>=5.11.0
+python-engineio>=4.9.0
+simple-websocket>=1.0.0
+
+# ─── Environment & Configuration ──────────────────────────────────────
+python-dotenv>=1.0.0
+
+# ─── Network & Packet Manipulation ────────────────────────────────────
+scapy>=2.5.0
+netifaces>=0.11.0
+flask
+flask-socketio
+netifaces
+python-dotenv
+scapy
+werkzeug

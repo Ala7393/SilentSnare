@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ──────────── SNIFFER PAGE ──────────── -->
+
+<div class="card">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+        <i class="fa-solid fa-satellite-dish" style="color:#44AAFF; font-size:1.4rem;"></i>
+        <h2 style="margin:0; color:#44AAFF;">Network Sniffer</h2>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:18px;">
+        Monitor HTTP/HTTPS traffic from a specific target device. Captured packets appear in the <strong style="color:var(--gold-primary);">Payload Inspector</strong>.
+    </p>
+
+    <!-- How it works -->
+    <div class="info-text" style="margin-bottom:18px;">
+        <strong style="color:var(--gold-primary);">
+            <i class="fa-solid fa-circle-info fa-xs"></i> How it works:
+        </strong>
+        <div class="steps-grid" style="margin-top:12px;">
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <div class="step-icon">🔍</div>
+                <div class="step-title">Scan Network</div>
+                <div class="step-desc">Discover all active devices on your local network using ARP</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <div class="step-icon">🎯</div>
+                <div class="step-title">Select Target</div>
+                <div class="step-desc">Click a device from the list to set it as sniffing target</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <div class="step-icon">▶️</div>
+                <div class="step-title">Start Sniffing</div>
+                <div class="step-desc">Capture all HTTP/HTTPS packets from the selected target</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">4</div>
+                <div class="step-icon">📊</div>
+                <div class="step-title">Inspect Packets</div>
+                <div class="step-desc">Open Payload Inspector to analyze the captured traffic</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Fields -->
+    <div class="control-group" style="align-items:flex-end; gap:16px;">
+
+        <div style="flex:2; min-width:180px;">
+            <div class="field-label">
+                <i class="fa-solid fa-crosshairs fa-xs"></i> Target IP
+                <span class="help-icon" data-tooltip="Enter the IP address of the device you want to monitor. Use Scan Network below to discover devices automatically.">?</span>
+            </div>
+            <input type="text" id="target-ip" placeholder="e.g. 192.168.1.100"
+                   data-tooltip="The victim device's IP address — its HTTP/HTTPS traffic will be captured"
+                   style="width:100%;">
+        </div>
+
+        <div style="flex:1; min-width:120px;">
+            <div class="field-label">
+                <i class="fa-solid fa-network-wired fa-xs"></i> Interface
+                <span class="help-icon" data-tooltip="Your machine's network interface connected to the target network. Common: eth0 (wired), wlan0 (wireless). Run 'ip link' to list available interfaces.">?</span>
+            </div>
+            <input type="text" id="sniff-interface" value="eth0" placeholder="eth0"
+                   data-tooltip="Network interface to sniff on — must be on the same network as the target"
+                   style="width:100%;">
+        </div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="control-group" style="margin-top:10px; flex-wrap:wrap; gap:8px;">
+
+        <button class="btn btn-info" onclick="scanNetwork()"
+                data-tooltip="Send ARP broadcast to discover all active devices on the local network (requires root)">
+            <i class="fa-solid fa-radar fa-xs"></i> Scan Network
+        </button>
+
+        <button class="btn" onclick="clearScanResults()"
+                style="background:var(--bg-light); border:1px solid var(--border-gold); color:var(--text-muted);"
+                data-tooltip="Clear the device list below">
+            <i class="fa-solid fa-broom fa-xs"></i> Clear List
+        </button>
+
+        <div style="width:1px; background:var(--border-gold); margin:0 4px;"></div>
+
+        <button class="btn" onclick="startSniff()"
+                style="background:#44BB44; color:#000; font-weight:700;"
+                data-tooltip="Start sniffing HTTP/HTTPS packets from the target IP. ARP spoofing must be active if the target is not on the same broadcast domain.">
+            <i class="fa-solid fa-play fa-xs"></i> Start Sniffing
+        </button>
+
+        <button class="btn btn-danger" onclick="stopSniff()"
+                data-tooltip="Stop the packet sniffer and release network resources">
+            <i class="fa-solid fa-stop fa-xs"></i> Stop
+        </button>
+
+        <button class="btn btn-secondary" onclick="checkSniffStatus()"
+                data-tooltip="Check current sniffer status and packet count">
+            <i class="fa-solid fa-rotate fa-xs"></i> Refresh Status
+        </button>
+
+        <a href="/inspector" class="btn" style="background:var(--gold-dark); color:#000; font-weight:700; text-decoration:none; margin-left:auto;"
+           data-tooltip="Go to Payload Inspector to analyze captured packets">
+            <i class="fa-solid fa-magnifying-glass fa-xs"></i> View Inspector
+        </a>
+
+    </div>
+
+    <!-- Status Bar -->
+    <div id="sniff-status" class="status-box status-inactive" style="margin-top:12px;">
+        <i class="fa-solid fa-pause-circle"></i> Sniffing inactive — press Start to begin
+    </div>
+
+    <!-- Scan Results -->
+    <div id="scan-results" style="margin-top:14px; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="color:var(--gold-secondary); font-size:0.82rem; font-weight:600;">
+                <i class="fa-solid fa-list fa-xs"></i> Discovered Devices — click to select target
+            </span>
+            <span id="device-count" style="color:var(--text-muted); font-size:0.78rem;"></span>
+        </div>
+        <div id="device-list" class="table-wrapper" style="max-height:220px; overflow-y:auto;"></div>
+    </div>
+
+</div>
+
+<script>
+function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scanNetwork() {
+    const iface = document.getElementById('sniff-interface').value.trim() || 'eth0';
+    showInfo('Scanning network on interface ' + iface + ' — please wait...');
+
+    fetch('/sniffer/scan_network', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interface: iface })
+    })
+    .then(res => res.json())
+    .then(data => {
+        const resultsDiv = document.getElementById('scan-results');
+        const listDiv    = document.getElementById('device-list');
+
+        if (data.status === 'success') {
+            const devices = data.devices || [];
+            document.getElementById('device-count').textContent = devices.length + ' device(s) found';
+
+            if (devices.length === 0) {
+                listDiv.innerHTML = '<div style="padding:12px; color:var(--text-muted); text-align:center;">No devices found — try a different interface</div>';
+            } else {
+                listDiv.innerHTML = devices.map(d => `
+                    <div class="device-item" onclick="setTarget('${escapeHtml(d.ip)}')"
+                         title="Click to set as target">
+                        <i class="fa-solid fa-desktop fa-xs" style="color:var(--gold-dark);"></i>
+                        <strong style="color:var(--text-white);">${escapeHtml(d.ip)}</strong>
+                        <span style="color:var(--text-muted); font-size:11px;">${escapeHtml(d.mac || 'unknown MAC')}</span>
+                    </div>
+                `).join('');
+            }
+
+            resultsDiv.style.display = 'block';
+            showSuccess(`Found ${devices.length} device(s) on the network`);
+        } else {
+            showError('Scan failed: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => showError('Network scan error: ' + err.message));
+}
+
+function clearScanResults() {
+    document.getElementById('scan-results').style.display = 'none';
+    document.getElementById('device-list').innerHTML = '';
+}
+
+function setTarget(ip) {
+    document.getElementById('target-ip').value = ip;
+    showInfo('Target set to ' + ip + ' — click Start Sniffing to begin');
+}
+
+function startSniff() {
+    const target = document.getElementById('target-ip').value.trim();
+    const iface  = document.getElementById('sniff-interface').value.trim() || 'eth0';
+
+    if (!target) {
+        showWarning('Please enter or select a target IP address first');
+        return;
+    }
+
+    if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(target)) {
+        showWarning('Invalid IP address format — e.g. 192.168.1.100');
+        return;
+    }
+
+    showInfo('Starting sniffer on ' + iface + ' targeting ' + target + '...');
+
+    fetch('/sniffer/start_sniff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interface: iface, target_ip: target })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success' || data.message?.includes('started')) {
+            showSuccess('Sniffing started — monitoring traffic from ' + target);
+            setStatus(true, 0);
+        } else {
+            showError(data.message || 'Failed to start sniffer');
+        }
+    })
+    .catch(err => showError('Failed to start sniffing: ' + err.message));
+}
+
+function stopSniff() {
+    fetch('/sniffer/stop_sniff', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        showWarning('Sniffer stopped — ' + (data.message || 'capture ended'));
+        setStatus(false, 0);
+    })
+    .catch(err => showError('Stop failed: ' + err.message));
+}
+
+function checkSniffStatus() {
+    fetch('/sniffer/sniff_status')
+    .then(res => res.json())
+    .then(data => {
+        setStatus(data.active, data.count || 0);
+        if (data.active) {
+            showInfo('Sniffer is active — ' + (data.count || 0) + ' packets captured');
+        } else {
+            showInfo('Sniffer is currently inactive');
+        }
+    })
+    .catch(() => showError('Could not reach sniffer status endpoint'));
+}
+
+function setStatus(active, count) {
+    const box = document.getElementById('sniff-status');
+    if (active) {
+        box.className = 'status-box status-active';
+        box.innerHTML = '<i class="fa-solid fa-circle-dot fa-xs"></i> Sniffing active — ' + count + ' packet(s) captured · <a href="/inspector" style="color:inherit; font-weight:700;">View Inspector →</a>';
+    } else {
+        box.className = 'status-box status-inactive';
+        box.innerHTML = '<i class="fa-solid fa-pause-circle fa-xs"></i> Sniffing inactive — press Start to begin';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', checkSniffStatus);
+</script>
+
+{% endblock %}
