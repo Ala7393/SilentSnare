@@ -275,3 +275,12 @@ pip install --break-system-packages netifaces
 MIT License — Educational Use Only
 Copyright (c) 2025 SilentSnare Project
 ```
+## 👨‍💻 فريق التطوير وجهات الاتصال
+
+|  | المطور | الدور | الهاتف | البريد الإلكتروني | GitHub | LinkedIn | Telegram | WhatsApp |
+|:-:|:---|:---|:---|:---|:---|:---|:---|:---|
+| 🧑‍💻 | **Ala Aladani** | مطور رئيسي / أمن شبكات | 📞 `+967 778 559 174` | 📧 [laa3490@gmail.com](mailto:laa3490@gmail.com) | [![GitHub](https://img.shields.io/badge/GitHub-Ala7393-gold?logo=github&logoColor=white)](https://github.com/Ala7393) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Ala7393-gold?logo=linkedin&logoColor=white)](https://linkedin.com/in/Ala7393) | [![Telegram](https://img.shields.io/badge/Telegram-@Ala7393-gold?logo=telegram&logoColor=white)](https://t.me/Ala7393) | [![WhatsApp](https://img.shields.io/badge/WhatsApp-+967778559174-gold?logo=whatsapp&logoColor=white)](https://wa.me/967778559174) |
+| 🧑‍💻 | **اسم مطور ثان** | واجهات أمامية / UX | 📞 `+967 XXX XXX XXX` | 📧 [email@example.com](mailto:email@example.com) | [![GitHub](https://img.shields.io/badge/GitHub-username-gold?logo=github&logoColor=white)](https://github.com/username) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-username-gold?logo=linkedin&logoColor=white)](https://linkedin.com/in/username) | [![Telegram](https://img.shields.io/badge/Telegram-@username-gold?logo=telegram&logoColor=white)](https://t.me/username) | [![WhatsApp](https://img.shields.io/badge/WhatsApp-+967XXXXXXXXX-gold?logo=whatsapp&logoColor=white)](https://wa.me/967XXXXXXXXX) |
+| (أضف صفوفاً حسب الحاجة) | ... | ... | ... | ... | ... | ... | ... | ... |
+
+> **ملاحظة:** جميع الأرقام وحسابات التواصل خاصة بالمطورين وتستخدم للأغراض الأكاديمية فقط.
