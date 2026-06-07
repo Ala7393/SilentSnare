@@ -286,7 +286,7 @@ Copyright (c) 2025 SilentSnare Project
 
 <td align="center" width="25%">
 
-### 👨‍💻 Ala Albaadani
+### 👨‍💻 Ala Al-Baadani
 
 **Lead Developer & Project Manager**
 
@@ -377,7 +377,7 @@ Engineer-yellow">
 
 | Member               | Responsibility                                       |
 | -------------------- | ---------------------------------------------------- |
-| **Ala Albadani**    | Project Leadership, System Architecture, Integration |
+| **Ala Al-Baadani**    | Project Leadership, System Architecture, Integration |
 | **Mohammed Salah**   | Backend Development, APIs, Database Management       |
 | **Wajdi Al-Maamari** | Cybersecurity Analysis, Testing & Quality Assurance  |
 | **Ahmed Shrah**     |Frontend Development, UI/UX Design  |
@@ -388,7 +388,7 @@ Engineer-yellow">
 
 | Developer        | Email                                                       | Phone            |
 | ---------------- | ----------------------------------------------------------- | ---------------- |
-| Ala Albadani    | [laa3490@gmail.com](mailto:laa3490@gmail.com)               | +967 778 559 174 |
+| Ala Al-Baadani    | [laa3490@gmail.com](mailto:laa3490@gmail.com)               | +967 778 559 174 |
 | Mohammed Salah   | [moom1719877@gmail.com](mailto:moom1719877@gmail.com)       | +967 771 719 877 |
 | Wajdi Al-Maamari | [wajdialmamary2@gmail.com](mailto:wajdialmamary2@gmail.com) | +967 775 968 143 |
 | Ahmed Shrah     | [ahmdalshybh81@gmail.com](mailto:ahmdalshybh81@gmail.com)   | +967 775 655 129 |
