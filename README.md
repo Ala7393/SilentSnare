@@ -386,12 +386,47 @@ Engineer-yellow">
 
 ## 📞 Contact Information
 
-| Developer        | Email                                                       | Phone            |
-| ---------------- | ----------------------------------------------------------- | ---------------- |
-| Ala Al-Baadani    | [laa3490@gmail.com](mailto:laa3490@gmail.com)               | +967 778 559 174 |
-| Mohammed Salah   | [moom1719877@gmail.com](mailto:moom1719877@gmail.com)       | +967 771 719 877 |
-| Wajdi Al-Maamari | [wajdialmamary2@gmail.com](mailto:wajdialmamary2@gmail.com) | +967 775 968 143 |
-| Ahmed Shrah     | [ahmdalshybh81@gmail.com](mailto:ahmdalshybh81@gmail.com)   | +967 775 655 129 |
+<table style="width:100%; border-collapse:collapse;">
+
+  <tr>
+    <th style="text-align:left; padding:10px; min-width:180px;">Developer</th>
+    <th style="text-align:left; padding:10px; min-width:260px;">Email</th>
+    <th style="text-align:left; padding:10px; min-width:200px;">Phone</th>
+  </tr>
+
+  <tr>
+    <td style="padding:10px; white-space:nowrap;">Ala Al-Baadani</td>
+    <td style="padding:10px; white-space:nowrap;">
+      <a href="mailto:laa3490@gmail.com">laa3490@gmail.com</a>
+    </td>
+    <td style="padding:10px; white-space:nowrap;">+967 778 559 174</td>
+  </tr>
+
+  <tr>
+    <td style="padding:10px; white-space:nowrap;">Mohammed Salah</td>
+    <td style="padding:10px; white-space:nowrap;">
+      <a href="mailto:moom1719877@gmail.com">moom1719877@gmail.com</a>
+    </td>
+    <td style="padding:10px; white-space:nowrap;">+967 771 719 877</td>
+  </tr>
+
+  <tr>
+    <td style="padding:10px; white-space:nowrap;">Wajdi Al-Maamari</td>
+    <td style="padding:10px; white-space:nowrap;">
+      <a href="mailto:wajdialmamary2@gmail.com">wajdialmamary2@gmail.com</a>
+    </td>
+    <td style="padding:10px; white-space:nowrap;">+967 775 968 143</td>
+  </tr>
+
+  <tr>
+    <td style="padding:10px; white-space:nowrap;">Ahmed Shrah</td>
+    <td style="padding:10px; white-space:nowrap;">
+      <a href="mailto:ahmdalshybh81@gmail.com">ahmdalshybh81@gmail.com</a>
+    </td>
+    <td style="padding:10px; white-space:nowrap;">+967 775 655 129</td>
+  </tr>
+
+</table>
 
 ---
 
