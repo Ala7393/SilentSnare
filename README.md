@@ -275,12 +275,129 @@ pip install --break-system-packages netifaces
 MIT License — Educational Use Only
 Copyright (c) 2025 SilentSnare Project
 ```
-## 👨‍💻 فريق التطوير وجهات الاتصال
+ ## 👨‍💻 Development Team
 
-|  | المطور | الدور | الهاتف | البريد الإلكتروني | GitHub | LinkedIn | Telegram | WhatsApp |
-|:-:|:---|:---|:---|:---|:---|:---|:---|:---|
-| 🧑‍💻 | **Ala Aladani** | مطور رئيسي / أمن شبكات | 📞 `+967 778 559 174` | 📧 [laa3490@gmail.com](mailto:laa3490@gmail.com) | [![GitHub](https://img.shields.io/badge/GitHub-Ala7393-gold?logo=github&logoColor=white)](https://github.com/Ala7393) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Ala7393-gold?logo=linkedin&logoColor=white)](https://linkedin.com/in/Ala7393) | [![Telegram](https://img.shields.io/badge/Telegram-@Ala7393-gold?logo=telegram&logoColor=white)](https://t.me/Ala7393) | [![WhatsApp](https://img.shields.io/badge/WhatsApp-+967778559174-gold?logo=whatsapp&logoColor=white)](https://wa.me/967778559174) |
-| 🧑‍💻 | **اسم مطور ثان** | واجهات أمامية / UX | 📞 `+967 XXX XXX XXX` | 📧 [email@example.com](mailto:email@example.com) | [![GitHub](https://img.shields.io/badge/GitHub-username-gold?logo=github&logoColor=white)](https://github.com/username) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-username-gold?logo=linkedin&logoColor=white)](https://linkedin.com/in/username) | [![Telegram](https://img.shields.io/badge/Telegram-@username-gold?logo=telegram&logoColor=white)](https://t.me/username) | [![WhatsApp](https://img.shields.io/badge/WhatsApp-+967XXXXXXXXX-gold?logo=whatsapp&logoColor=white)](https://wa.me/967XXXXXXXXX) |
-| (أضف صفوفاً حسب الحاجة) | ... | ... | ... | ... | ... | ... | ... | ... |
+<div align="center">
 
-> **ملاحظة:** جميع الأرقام وحسابات التواصل خاصة بالمطورين وتستخدم للأغراض الأكاديمية فقط.
+## 🏆 Core Development Team
+
+<table>
+<tr>
+
+<td align="center" width="25%">
+
+### 👨‍💻 Ala Albaadani
+
+**Lead Developer & Project Manager**
+
+📧 [laa3490@gmail.com](mailto:laa3490@gmail.com)
+
+📱 +967 778 559 174
+
+<br>
+
+<a href="https://github.com/Ala7393">
+<img src="https://img.shields.io/badge/GitHub-Ala7393-gold?logo=github&logoColor=white">
+</a>
+
+<a href="https://linkedin.com/in/Ala7393">
+<img src="https://img.shields.io/badge/LinkedIn-Ala7393-gold?logo=linkedin&logoColor=white">
+</a>
+
+<a href="https://t.me/Ala7393">
+<img src="https://img.shields.io/badge/Telegram-@Ala7393-gold?logo=telegram&logoColor=white">
+</a>
+
+<a href="https://wa.me/967778559174">
+<img src="https://img.shields.io/badge/WhatsApp-+967778559174-gold?logo=whatsapp&logoColor=white">
+</a>
+
+</td>
+
+<td align="center" width="25%">
+
+### 👨‍💻 Mohammed Salah
+
+**Backend Developer & Database Engineer**
+
+📧 [moom1719877@gmail.com](mailto:moom1719877@gmail.com)
+
+📱 +967 771 719 877
+
+<br>
+
+<img src="https://img.shields.io/badge/Backend-Developer-blue">
+<img src="https://img.shields.io/badge/Database-Engineer-green">
+
+</td>
+
+</tr>
+
+<tr>
+
+<td align="center">
+
+### 👨‍💻 Wajdi Al-Maamari
+
+**Frontend Developer & UI/UX Designer**
+
+📧 [wajdialmamary2@gmail.com](mailto:wajdialmamary2@gmail.com)
+
+📱 +967 775 968 143
+
+<br>
+
+<img src="https://img.shields.io/badge/Frontend-Developer-orange">
+<img src="https://img.shields.io/badge/UI%2FUX-Designer-purple">
+
+</td>
+
+<td align="center">
+
+### 👨‍💻 Ahmed Sharah
+
+**Cybersecurity Analyst & Quality Assurance Engineer**
+
+📧 [ahmdalshybh81@gmail.com](mailto:ahmdalshybh81@gmail.com)
+
+📱 +967 775 655 129
+
+<br>
+
+<img src="https://img.shields.io/badge/Cybersecurity-Analyst-red">
+<img src="https://img.shields.io/badge/QA-Engineer-yellow">
+
+</td>
+
+</tr>
+</table>
+
+</div>
+
+---
+
+## 📌 Team Responsibilities
+
+| Member               | Responsibility                                       |
+| -------------------- | ---------------------------------------------------- |
+| **Ala Albaadani**    | Project Leadership, System Architecture, Integration |
+| **Mohammed Salah**   | Backend Development, APIs, Database Management       |
+| **Wajdi Al-Maamari** | Frontend Development, UI/UX Design                   |
+| **Ahmed Sharah**     | Cybersecurity Analysis, Testing & Quality Assurance  |
+
+---
+
+## 📞 Contact Information
+
+| Developer        | Email                                                       | Phone            |
+| ---------------- | ----------------------------------------------------------- | ---------------- |
+| Ala Albaadani    | [laa3490@gmail.com](mailto:laa3490@gmail.com)               | +967 778 559 174 |
+| Mohammed Salah   | [moom1719877@gmail.com](mailto:moom1719877@gmail.com)       | +967 771 719 877 |
+| Wajdi Al-Maamari | [wajdialmamary2@gmail.com](mailto:wajdialmamary2@gmail.com) | +967 775 968 143 |
+| Ahmed Sharah     | [ahmdalshybh81@gmail.com](mailto:ahmdalshybh81@gmail.com)   | +967 775 655 129 |
+
+---
+
+> © 2026 Development Team. All Rights Reserved.
+>
+> This project was developed collaboratively by the team members listed above for academic, research, and professional purposes.
