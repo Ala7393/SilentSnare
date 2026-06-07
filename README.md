@@ -339,33 +339,30 @@ Copyright (c) 2025 SilentSnare Project
 
 ### 👨‍💻 Wajdi Al-Maamari
 
-**Frontend Developer & UI/UX Designer**
-
+**Cybersecurity Analyst & Quality Assurance Engineer**
 📧 [wajdialmamary2@gmail.com](mailto:wajdialmamary2@gmail.com)
 
 📱 +967 775 968 143
 
 <br>
-
-<img src="https://img.shields.io/badge/Frontend-Developer-orange">
-<img src="https://img.shields.io/badge/UI%2FUX-Designer-purple">
-
+<img src="https://img.shields.io/badge/Cybersecurity-Analyst-red">
+<img src="https://img.shields.io/badge/QA-
+Engineer-yellow">
 </td>
 
 <td align="center">
 
 ### 👨‍💻 Ahmed Sharah
-
-**Cybersecurity Analyst & Quality Assurance Engineer**
+**Frontend Developer & UI/UX Designer**
 
 📧 [ahmdalshybh81@gmail.com](mailto:ahmdalshybh81@gmail.com)
 
 📱 +967 775 655 129
 
 <br>
+<img src="https://img.shields.io/badge/Frontend-Developer-orange">
+<img src="https://img.shields.io/badge/UI%2FUX-Designer-purple">
 
-<img src="https://img.shields.io/badge/Cybersecurity-Analyst-red">
-<img src="https://img.shields.io/badge/QA-Engineer-yellow">
 
 </td>
 
@@ -380,10 +377,10 @@ Copyright (c) 2025 SilentSnare Project
 
 | Member               | Responsibility                                       |
 | -------------------- | ---------------------------------------------------- |
-| **Ala Albaadani**    | Project Leadership, System Architecture, Integration |
+| **Ala Albadani**    | Project Leadership, System Architecture, Integration |
 | **Mohammed Salah**   | Backend Development, APIs, Database Management       |
-| **Wajdi Al-Maamari** | Frontend Development, UI/UX Design                   |
-| **Ahmed Sharah**     | Cybersecurity Analysis, Testing & Quality Assurance  |
+| **Wajdi Al-Maamari** | Cybersecurity Analysis, Testing & Quality Assurance  |
+| **Ahmed Shrah**     |Frontend Development, UI/UX Design  |
 
 ---
 
@@ -391,10 +388,10 @@ Copyright (c) 2025 SilentSnare Project
 
 | Developer        | Email                                                       | Phone            |
 | ---------------- | ----------------------------------------------------------- | ---------------- |
-| Ala Albaadani    | [laa3490@gmail.com](mailto:laa3490@gmail.com)               | +967 778 559 174 |
+| Ala Albadani    | [laa3490@gmail.com](mailto:laa3490@gmail.com)               | +967 778 559 174 |
 | Mohammed Salah   | [moom1719877@gmail.com](mailto:moom1719877@gmail.com)       | +967 771 719 877 |
 | Wajdi Al-Maamari | [wajdialmamary2@gmail.com](mailto:wajdialmamary2@gmail.com) | +967 775 968 143 |
-| Ahmed Sharah     | [ahmdalshybh81@gmail.com](mailto:ahmdalshybh81@gmail.com)   | +967 775 655 129 |
+| Ahmed Shrah     | [ahmdalshybh81@gmail.com](mailto:ahmdalshybh81@gmail.com)   | +967 775 655 129 |
 
 ---
 
